@@ -47,6 +47,11 @@ function! GetPuppetIndent()
        return 0
     endif
 
+    let ppnum = prevnonblank(pnum - 1)
+    if ppnum != 0
+      let ppline = getline(ppnum)
+  endif
+
     let line = getline(v:lnum)
     let pline = getline(pnum)
     let ind = indent(pnum)
@@ -55,8 +60,13 @@ function! GetPuppetIndent()
         return ind
     endif
 
+    " Utrecht style leading commas
+    if ppnum != 0 && pline =~ '^    ' && ppline =~ ':$'
+        let ind -= &sw
+    endif
+
     if pline =~ '\({\|\[\|(\|:\)$'
-        let ind += &sw
+        let ind += 2 * &sw
     elseif pline =~ ';$' && pline !~ '[^:]\+:.*[=+]>.*'
         let ind -= &sw
     elseif pline =~ '^\s*include\s\+.*,$'
@@ -76,7 +86,7 @@ function! GetPuppetIndent()
     if line =~ '^\s*}\s*els\(e\|if\).*{\s*$'
         let ind -= &sw
     endif
-    
+
     " Don't indent resources that are one after another with a ->(ordering arrow)
     " file {'somefile':
     "    ...

@@ -15,10 +15,23 @@ syntax on
 
 if has('vim_starting')
   set runtimepath+=/home/taladar/.vim/bundle/vim-puppet
-  set runtimepath+=/home/taladar/.vim/bundle/vim-closer
+  "  set runtimepath+=/home/taladar/.vim/bundle/vim-closer
 endif
 
 " just for convenience while testing
 set history=1000
 set pastetoggle=<F11>
+set hidden
 
+function! s:PuppetBuffer()
+  new
+  set filetype=puppet
+  " let b:closer = 1
+  " let b:closer_flags = '([{'
+  " call closer#enable()
+  execute "normal ifoo { 'bar':\<CR> "
+endfunction
+
+command PuppetBuffer :call s:PuppetBuffer()
+
+PuppetBuffer

@@ -15,7 +15,7 @@ syntax on
 
 if has('vim_starting')
   set runtimepath+=/home/taladar/.vim/bundle/vim-puppet
-  set runtimepath+=/home/taladar/.vim/bundle/vim-closer
+  " set runtimepath+=/home/taladar/.vim/bundle/vim-closer
 endif
 
 describe 'indentation on new line'
@@ -23,9 +23,9 @@ describe 'indentation on new line'
   before
     new
     set filetype=puppet
-    let b:closer = 1
-    let b:closer_flags = '([{'
-    call closer#enable()
+    " let b:closer = 1
+    " let b:closer_flags = '([{'
+    " call closer#enable()
   end
 
   after
@@ -41,6 +41,7 @@ describe 'indentation on new line'
     Expect line('.') == 1
     Expect col('.') == 1
     execute "normal i\<CR>"
+    Expect GetPuppetIndent() == 0
     Expect line('.') == 2
     Expect col('.') == 1
   end
@@ -49,18 +50,20 @@ describe 'indentation on new line'
     Expect line('.') == 1
     Expect col('.') == 1
     execute "normal ifoo { 'bar':\<CR> "
+    Expect GetPuppetIndent() == 4
     Expect getline(1) == "foo { 'bar':"
     Expect getline(2) == '     '
     Expect line('.') == 2
     Expect col('.') == 5
   end
 
-  it 'adds an unindented closing brace to line 3 on return after a resource start on line 1'
+  it 'indents by 4 spaces on o on resource start line'
     Expect line('.') == 1
     Expect col('.') == 1
-    execute "normal ifoo { 'bar':\<CR> "
+    execute "normal ifoo { 'bar':\<ESC>o "
+    Expect GetPuppetIndent() == 4
     Expect getline(1) == "foo { 'bar':"
-    Expect getline(3) == '}'
+    Expect getline(2) == '     '
     Expect line('.') == 2
     Expect col('.') == 5
   end
@@ -69,10 +72,9 @@ describe 'indentation on new line'
     Expect line('.') == 1
     Expect col('.') == 1
     execute "normal ifoo { 'bar':\<CR>hello => world\<CR>, baz"
+    Expect GetPuppetIndent() == 2
     Expect getline(1) == "foo { 'bar':"
-    Expect getline(2) == '    hello => world'
     Expect getline(3) == '  , baz'
-    Expect getline(4) == '}'
     Expect line('.') == 3
     Expect col('.') == 7
   end
