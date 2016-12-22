@@ -78,4 +78,82 @@ describe 'indentation on new line'
     Expect line('.') == 3
     Expect col('.') == 7
   end
+
+  it 'unindents the closing curly brace in a parameter-less resource'
+    Expect line('.') == 1
+    Expect col('.') == 1
+    execute "normal ifoo { 'bar':\<CR>}"
+    Expect GetPuppetIndent() == 0
+    Expect getline(1) == "foo { 'bar':"
+    Expect getline(2) == '}'
+    Expect line('.') == 2
+    Expect col('.') == 1
+  end
+
+  it 'unindents the closing curly brace in a single parameter resource'
+    Expect line('.') == 1
+    Expect col('.') == 1
+    execute "normal ifoo { 'bar':\<CR>hello => world\<CR>}"
+    Expect GetPuppetIndent() == 0
+    Expect getline(1) == "foo { 'bar':"
+    Expect getline(3) == '}'
+    Expect line('.') == 3
+    Expect col('.') == 1
+  end
+
+  it 'unindents the closing curly brace in a two parameter resource'
+    Expect line('.') == 1
+    Expect col('.') == 1
+    execute "normal ifoo { 'bar':\<CR>hello => world\<CR>, foo => bar\<CR>}"
+    Expect GetPuppetIndent() == 0
+    Expect getline(1) == "foo { 'bar':"
+    Expect getline(4) == '}'
+    Expect line('.') == 4
+    Expect col('.') == 1
+  end
+
+  it 'indents a comma after opening resource title array to open square bracket column'
+    Expect line('.') == 1
+    Expect col('.') == 1
+    execute "normal ifoo { [ 'bar'\<CR>,"
+    Expect GetPuppetIndent() == 6
+    Expect getline(1) == "foo { [ 'bar'"
+    Expect getline(2) == '      ,'
+    Expect line('.') == 2
+    Expect col('.') == 7
+  end
+
+  it 'indents a comma later in resource title array to previous line comma'
+    Expect line('.') == 1
+    Expect col('.') == 1
+    execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>,"
+    Expect GetPuppetIndent() == 6
+    Expect getline(1) == "foo { [ 'bar'"
+    Expect getline(2) == "      , 'baz'"
+    Expect getline(3) == '      ,'
+    Expect line('.') == 3
+    Expect col('.') == 7
+  end
+
+  it 'indents a closing square bracket after opening resource title array to open square bracket column'
+    Expect line('.') == 1
+    Expect col('.') == 1
+    execute "normal ifoo { [ 'bar'\<CR>]"
+    Expect GetPuppetIndent() == 6
+    Expect getline(1) == "foo { [ 'bar'"
+    Expect getline(2) == '      ]'
+    Expect line('.') == 2
+    Expect col('.') == 7
+  end
+
+  it 'indents a closing square bracket later in resource title array to open square bracket column'
+    Expect line('.') == 1
+    Expect col('.') == 1
+    execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]"
+    Expect GetPuppetIndent() == 6
+    Expect getline(1) == "foo { [ 'bar'"
+    Expect getline(3) == '      ]'
+    Expect line('.') == 3
+    Expect col('.') == 7
+  end
 end
