@@ -1,21 +1,31 @@
-"silent filetype plugin on
-"silent filetype indent on
-"syntax enable
-"set autoindent
+set encoding=utf-8
+scriptencoding utf-8
+set nocompatible
+set tabstop=2
+set shiftwidth=2
+set expandtab
+set softtabstop=2
+set autoindent
+set backspace=indent,eol,start
+set formatoptions-=t
+set textwidth=0 wrapmargin=0
 
-"let &runtimepath.=','.escape(expand('<sfile>:p:h'), '\,')
-"let &runtimepath.=','.escape(expand('<sfile>:p:h'), '\,').'/after'
+filetype plugin indent on
+syntax on
+
+if has('vim_starting')
+  set runtimepath+=/home/taladar/.vim/bundle/vim-puppet
+  set runtimepath+=/home/taladar/.vim/bundle/vim-closer
+endif
 
 describe 'indentation on new line'
 
   before
     new
-    "setlocal filetype=puppet
-    "source autoload/puppet/align.vim
-    "source indent/puppet.vim
-    "source syntax/puppet.vim
-    "source ftplugin/puppet.vim
-    "Expect &filetype == "puppet"
+    set filetype=puppet
+    let b:closer = 1
+    let b:closer_flags = '([{'
+    call closer#enable()
   end
 
   after
@@ -38,9 +48,9 @@ describe 'indentation on new line'
   it 'indents by 4 spaces on return after a resource start'
     Expect line('.') == 1
     Expect col('.') == 1
-    execute "normal ifoo { 'bar':\<CR>"
+    execute "normal ifoo { 'bar':\<CR> "
     Expect getline(1) == "foo { 'bar':"
-    Expect getline(2) == '    '
+    Expect getline(2) == '     '
     Expect line('.') == 2
     Expect col('.') == 5
   end
@@ -48,7 +58,7 @@ describe 'indentation on new line'
   it 'adds an unindented closing brace to line 3 on return after a resource start on line 1'
     Expect line('.') == 1
     Expect col('.') == 1
-    execute "normal ifoo { 'bar':\<CR>"
+    execute "normal ifoo { 'bar':\<CR> "
     Expect getline(1) == "foo { 'bar':"
     Expect getline(3) == '}'
     Expect line('.') == 2

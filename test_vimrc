@@ -1,0 +1,24 @@
+set encoding=utf-8
+scriptencoding utf-8
+set nocompatible
+set tabstop=2
+set shiftwidth=2
+set expandtab
+set softtabstop=2
+set autoindent
+set backspace=indent,eol,start
+set formatoptions-=t
+set textwidth=0 wrapmargin=0
+
+filetype plugin indent on
+syntax on
+
+if has('vim_starting')
+  set runtimepath+=/home/taladar/.vim/bundle/vim-puppet
+  set runtimepath+=/home/taladar/.vim/bundle/vim-closer
+endif
+
+" just for convenience while testing
+set history=1000
+set pastetoggle=<F11>
+
