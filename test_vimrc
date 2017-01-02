@@ -29,7 +29,7 @@ function! s:PuppetBuffer()
   " let b:closer = 1
   " let b:closer_flags = '([{'
   " call closer#enable()
-  execute "normal ifoo { 'bar':\<ESC>o "
+  execute "normal Afoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => bar\<CR>, baz => quux\<CR>}"
 endfunction
 
 command PuppetBuffer :call s:PuppetBuffer()
