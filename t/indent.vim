@@ -408,6 +408,31 @@ describe 'indentation on new line =>'
           Expect line('.') == 2
           Expect col('.') == 1
         end
+
+        it 'indents closing curly brace of empty main body to opening curly brace line indent'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal icase($foo) {\<CR>}"
+          Expect getline(1) == "case($foo) {"
+          Expect GetPuppetIndent() == 0
+          Expect getline(2) == '}'
+          Expect line('.') == 2
+          Expect col('.') == 1
+        end
+
+        it 'indents closing curly brace of case body with a single case as body to column of opening curly brace'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal icase($foo) {\<CR>'foo': {\<CR>\<CR>}\<CR>}"
+          Expect getline(1) == "case($foo) {"
+          Expect getline(2) == "'foo': {"
+          Expect getline(3) == ''
+          Expect getline(4) == '}'
+          Expect GetPuppetIndent() == 0
+          Expect getline(5) == '}'
+          Expect line('.') == 5
+          Expect col('.') == 1
+        end
       end
       context "case body =>"
         it 'indents case body by 2 spaces after hitting return'
@@ -420,6 +445,31 @@ describe 'indentation on new line =>'
           Expect getline(3) == '   '
           Expect line('.') == 3
           Expect col('.') == 3
+        end
+
+        it 'indents closing curly brace of empty case body to column of opening curly brace'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal icase($foo) {\<CR>'foo': {\<CR>}"
+          Expect getline(1) == "case($foo) {"
+          Expect getline(2) == "'foo': {"
+          Expect GetPuppetIndent() == 0
+          Expect getline(3) == '}'
+          Expect line('.') == 3
+          Expect col('.') == 1
+        end
+
+        it 'indents closing curly brace of case body with an empty line as body to column of opening curly brace'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal icase($foo) {\<CR>'foo': {\<CR>\<CR>}"
+          Expect getline(1) == "case($foo) {"
+          Expect getline(2) == "'foo': {"
+          Expect getline(3) == ''
+          Expect GetPuppetIndent() == 0
+          Expect getline(4) == '}'
+          Expect line('.') == 4
+          Expect col('.') == 1
         end
       end
     end

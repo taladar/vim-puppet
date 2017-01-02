@@ -42,7 +42,7 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
         return 0
     endif
     let rline = getline(rlnum)
-    if rline =~ '^\s*\([a-z0-9:]\+\|\(if\|unless\)(.*)\) {' && strcharpart(rline, rcol - 1, 1) == '{'
+    if rline =~ '^\s*\([a-z0-9:]\+\|\(if\|unless\|case\)(.*)\) {' && strcharpart(rline, rcol - 1, 1) == '{'
       return indent(rlnum)
     endif
     return rcol - 1
@@ -112,7 +112,12 @@ function! GetPuppetIndent()
 
     " opening of a case body (the per case one, not the main one)
     if pline =~ ': {$'
-        let ind = indent(pnum) + &sw
+        if line =~ '^\s*}'
+          " empty case body with immediate closing curly brace
+          let ind = indent(pnum)
+        else
+          let ind = indent(pnum) + &sw
+        endif
     endif
 
     " Don't actually shift over for } else {
