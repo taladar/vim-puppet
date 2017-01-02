@@ -326,6 +326,103 @@ describe 'indentation on new line =>'
         end
       end
     end
+
+    context "if =>"
+      context "single line condition =>"
+        context "body =>"
+          it 'indents body by 2 spaces after hitting return'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal iif(foo == bar) {\<CR> "
+            Expect GetPuppetIndent() == 2
+            Expect getline(1) == "if(foo == bar) {"
+            Expect getline(2) == '   '
+            Expect line('.') == 2
+            Expect col('.') == 3
+          end
+
+          it 'indents body by 2 spaces after o on condition line'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal iif(foo == bar) {\<ESC>o "
+            Expect GetPuppetIndent() == 2
+            Expect getline(1) == "if(foo == bar) {"
+            Expect getline(2) == '   '
+            Expect line('.') == 2
+            Expect col('.') == 3
+          end
+        end
+      end
+
+      context "multi line condition =>"
+        context "body =>"
+          it 'indents body by 2 spaces after hitting return'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal iif(   foo == bar\<CR>&& baz == quux\<CR>) {\<CR> "
+            Expect getline(1) == "if(   foo == bar"
+            Expect getline(2) == "   && baz == quux"
+            Expect getline(3) == '  ) {'
+            Expect GetPuppetIndent() == 2
+            Expect getline(4) == '   '
+            Expect line('.') == 4
+            Expect col('.') == 3
+          end
+
+          it 'indents body by 2 spaces after o on condition line'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal iif(   foo == bar\<CR>&& baz == quux\<CR>) {\<ESC>o "
+            Expect getline(1) == "if(   foo == bar"
+            Expect getline(2) == "   && baz == quux"
+            Expect getline(3) == '  ) {'
+            Expect GetPuppetIndent() == 2
+            Expect getline(4) == '   '
+            Expect line('.') == 4
+            Expect col('.') == 3
+          end
+        end
+      end
+    end
+
+    context "case =>"
+      context "main body =>"
+        it 'indents body by 0 spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal icase($foo) {\<CR> "
+          Expect getline(1) == "case($foo) {"
+          Expect GetPuppetIndent() == 0
+          Expect getline(2) == ' '
+          Expect line('.') == 2
+          Expect col('.') == 1
+        end
+
+        it 'indents body by 0 spaces after o on condition line'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal icase($foo) {\<ESC>o "
+          Expect getline(1) == "case($foo) {"
+          Expect GetPuppetIndent() == 0
+          Expect getline(2) == ' '
+          Expect line('.') == 2
+          Expect col('.') == 1
+        end
+      end
+      context "case body =>"
+        it 'indents case body by 2 spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal icase($foo) {\<CR>'foo': {\<CR> "
+          Expect getline(1) == "case($foo) {"
+          Expect getline(2) == "'foo': {"
+          Expect GetPuppetIndent() == 2
+          Expect getline(3) == '   '
+          Expect line('.') == 3
+          Expect col('.') == 3
+        end
+      end
+    end
   end
 
   context "starting indented by 4 spaces =>"

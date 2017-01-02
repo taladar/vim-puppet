@@ -11,18 +11,11 @@ let b:did_indent = 1
 
 setlocal autoindent smartindent
 setlocal indentexpr=GetPuppetIndent()
-setlocal indentkeys+=0],0)
+setlocal indentkeys+=0],0),0&,0\|,0(
 
 if exists("*GetPuppetIndent")
     finish
 endif
-
-function! s:OpenBrace(lnum)
-    let save_cursor = getcurpos()
-    call cursor(a:lnum, 1)
-    call setpos('.', save_cursor)
-    return searchpair('{\|\[\|(', '', '}\|\]\|)', 'nbW')
-endfunction
 
 function! s:OpenBraceLine(lnum)
     let save_cursor = getcurpos()
@@ -30,6 +23,14 @@ function! s:OpenBraceLine(lnum)
     let [rlnum, rcol] = searchpairpos('{\|\[\|(', '', '}\|\]\|)', 'nbW')
     call setpos('.', save_cursor)
     return rlnum
+endfunction
+
+function! s:OpenBraceCol(lnum)
+    let save_cursor = getcurpos()
+    call cursor(a:lnum, 1)
+    let [rlnum, rcol] = searchpairpos('{\|\[\|(', '', '}\|\]\|)', 'nbW')
+    call setpos('.', save_cursor)
+    return rcol
 endfunction
 
 function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
@@ -41,7 +42,7 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
         return 0
     endif
     let rline = getline(rlnum)
-    if rline =~ '^\s*[a-z0-9:]\+ {' && strcharpart(rline, rcol - 1, 1) == '{'
+    if rline =~ '^\s*\([a-z0-9:]\+\|\(if\|unless\)(.*)\) {' && strcharpart(rline, rcol - 1, 1) == '{'
       return indent(rlnum)
     endif
     return rcol - 1
@@ -63,7 +64,7 @@ function! GetPuppetIndent()
     let ind = indent(pnum)
 
     if pline =~ '^\s*#'
-        return indent(s:OpenBrace(pnum))
+        return indent(s:OpenBraceLine(pnum))
     endif
 
     " Utrecht style leading commas for resources
@@ -77,7 +78,28 @@ function! GetPuppetIndent()
         let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum)
     endif
 
-    if pline =~ '\({\|\[\|(\|:\)$'
+    " multi-line condition
+    if line =~ '^\s*\(&\||\)'
+        let ind = s:OpenBraceCol(v:lnum)
+    endif
+
+    " opening { of if or case body
+    if pline =~ ') {$'
+        if pline =~ '^\s*) {$'
+          " multi-line condition if
+          let ind = indent(s:OpenBraceLine(v:lnum))
+        else
+          if pline =~ '^\s*if('
+            " single-line condition if
+            let ind = indent(s:OpenBraceLine(v:lnum)) + &sw
+          elseif pline =~ '^\s*case('
+            let ind = indent(s:OpenBraceLine(v:lnum))
+          endif
+        endif
+    endif
+
+    " opening of resource body
+    if pline =~ ':$'
         let ind = indent(s:OpenBraceLine(v:lnum)) + 2 * &sw
     elseif pline =~ ';$' && pline !~ '[^:]\+:.*[=+]>.*'
         let ind -= &sw
@@ -86,6 +108,11 @@ function! GetPuppetIndent()
     " Match } }, }; ] ]: ], ]; )
     if line =~ '^\s*\(}\(,\|;\)\?$\|]:\|],\|}]\|];\?$\|)\)'
         let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum)
+    endif
+
+    " opening of a case body (the per case one, not the main one)
+    if pline =~ ': {$'
+        let ind = indent(pnum) + &sw
     endif
 
     " Don't actually shift over for } else {
