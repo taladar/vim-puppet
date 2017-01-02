@@ -73,6 +73,31 @@ describe 'indentation on new line =>'
             Expect line('.') == 2
             Expect col('.') == 5
           end
+
+          it 'indents comma in array parameter value on first parameter to open square bracket column'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal ifoo { 'bar':\<ESC>ofoo => [ 'hello'\<CR>,"
+            Expect getline(1) == "foo { 'bar':"
+            Expect getline(2) == "    foo => [ 'hello'"
+            Expect GetPuppetIndent() == 11
+            Expect getline(3) == '           ,'
+            Expect line('.') == 3
+            Expect col('.') == 12
+          end
+
+          it 'indents closing square bracket in array parameter value on first parameter to open square bracket column'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal ifoo { 'bar':\<ESC>ofoo => [ 'hello'\<CR>, 'world'\<CR>]"
+            Expect getline(1) == "foo { 'bar':"
+            Expect getline(2) == "    foo => [ 'hello'"
+            Expect getline(3) == "           , 'world'"
+            Expect GetPuppetIndent() == 11
+            Expect getline(4) == "           ]"
+            Expect line('.') == 4
+            Expect col('.') == 12
+          end
         end
 
         context "further parameters =>"
@@ -85,6 +110,33 @@ describe 'indentation on new line =>'
             Expect getline(3) == '  , baz'
             Expect line('.') == 3
             Expect col('.') == 7
+          end
+
+          it 'indents comma in array parameter value on second parameter to open square bracket column'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal ifoo { 'bar':\<ESC>obaz => quux\<CR>, foo => [ 'hello'\<CR>,"
+            Expect getline(1) == "foo { 'bar':"
+            Expect getline(2) == "    baz => quux"
+            Expect getline(3) == "  , foo => [ 'hello'"
+            Expect GetPuppetIndent() == 11
+            Expect getline(4) == '           ,'
+            Expect line('.') == 4
+            Expect col('.') == 12
+          end
+
+          it 'indents closing square bracket in array parameter value on first parameter to open square bracket column'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal ifoo { 'bar':\<ESC>obaz => quux\<CR>, foo => [ 'hello'\<CR>, 'world'\<CR>]"
+            Expect getline(1) == "foo { 'bar':"
+            Expect getline(2) == "    baz => quux"
+            Expect getline(3) == "  , foo => [ 'hello'"
+            Expect getline(4) == "           , 'world'"
+            Expect GetPuppetIndent() == 11
+            Expect getline(5) == "           ]"
+            Expect line('.') == 5
+            Expect col('.') == 12
           end
         end
 
@@ -182,6 +234,35 @@ describe 'indentation on new line =>'
             Expect getline(4) == '    foo'
             Expect line('.') == 4
             Expect col('.') == 7
+          end
+
+          it 'indents comma in array parameter value on first parameter to open square bracket column'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => [ 'hello'\<CR>,"
+            Expect getline(1) == "foo { [ 'bar'"
+            Expect getline(2) == "      , 'baz'"
+            Expect getline(3) == "      ]:"
+            Expect getline(4) == "    foo => [ 'hello'"
+            Expect GetPuppetIndent() == 11
+            Expect getline(5) == '           ,'
+            Expect line('.') == 5
+            Expect col('.') == 12
+          end
+
+          it 'indents closing square bracket in array parameter value on first parameter to open square bracket column'
+            Expect line('.') == 1
+            Expect col('.') == 1
+            execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => [ 'hello'\<CR>, 'world'\<CR>]"
+            Expect getline(1) == "foo { [ 'bar'"
+            Expect getline(2) == "      , 'baz'"
+            Expect getline(3) == "      ]:"
+            Expect getline(4) == "    foo => [ 'hello'"
+            Expect getline(5) == "           , 'world'"
+            Expect GetPuppetIndent() == 11
+            Expect getline(6) == '           ]'
+            Expect line('.') == 6
+            Expect col('.') == 12
           end
         end
 
