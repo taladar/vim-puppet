@@ -11,7 +11,7 @@ let b:did_indent = 1
 
 setlocal autoindent smartindent
 setlocal indentexpr=GetPuppetIndent()
-setlocal indentkeys+=0],0),0&,0\|,0(
+setlocal indentkeys+=0],0),0&,0\|,0(,{
 
 if exists("*GetPuppetIndent")
     finish
@@ -30,7 +30,7 @@ function! s:OpenBraceCol(lnum)
     call cursor(a:lnum, 1)
     let [rlnum, rcol] = searchpairpos('{\|\[\|(', '', '}\|\]\|)', 'nbW')
     call setpos('.', save_cursor)
-    return rcol
+    return rcol - 1
 endfunction
 
 function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
@@ -43,6 +43,9 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
     endif
     let rline = getline(rlnum)
     if rline =~ '^\s*\([a-z0-9:]\+\|\(if\|unless\|case\)(.*)\) {' && strcharpart(rline, rcol - 1, 1) == '{'
+      return indent(rlnum)
+    endif
+    if rline =~ '^\s*\(function\|class\|define\) [a-z:_]*($' && strcharpart(rline, rcol - 1, 1) == '('
       return indent(rlnum)
     endif
     return rcol - 1
@@ -63,12 +66,8 @@ function! GetPuppetIndent()
     let pline = getline(pnum)
     let ind = indent(pnum)
 
-    if pline =~ '^\s*#'
-        return indent(s:OpenBraceLine(pnum))
-    endif
-
     " Utrecht style leading commas for resources
-    if ppnum != 0 && pline =~ '^    ' && ppline =~ ':$'
+    if ppnum != 0 && pline =~ '^    ' && ( ppline =~ ':$' || ppline =~ '($' )
         let ind = indent(s:OpenBraceLine(v:lnum)) + &sw
     endif
 
@@ -80,7 +79,7 @@ function! GetPuppetIndent()
 
     " multi-line condition
     if line =~ '^\s*\(&\||\)'
-        let ind = s:OpenBraceCol(v:lnum)
+        let ind = s:OpenBraceCol(v:lnum) + 1
     endif
 
     " opening { of if or case body
@@ -100,14 +99,24 @@ function! GetPuppetIndent()
 
     " opening of resource body
     if pline =~ ':$'
-        let ind = indent(s:OpenBraceLine(v:lnum)) + 2 * &sw
+        let ind = indent(s:OpenBraceLine(v:lnum)) + &sw + 2
     elseif pline =~ ';$' && pline !~ '[^:]\+:.*[=+]>.*'
-        let ind -= &sw
+        let ind = indent(pnum) - &sw
     endif
 
-    " Match } }, }; ] ]: ], ]; )
-    if line =~ '^\s*\(}\(,\|;\)\?$\|]:\|],\|}]\|];\?$\|)\)'
+    " Match } }, }; ] ]: ], ];
+    if line =~ '^\s*\(}\(,\|;\)\?$\|]:\|],\|}]\|];\?$\)'
         let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum)
+    endif
+
+    if line =~ '^\s*) {$'
+        if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*\(function\|class\|define\)'
+          " closing of parameter list of function, class of defined type
+          let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum) + &sw
+        else
+          " closing of multi-line if or unless condition
+          let ind = s:OpenBraceCol(v:lnum)
+        endif
     endif
 
     " opening of a case body (the per case one, not the main one)
@@ -118,6 +127,11 @@ function! GetPuppetIndent()
         else
           let ind = indent(pnum) + &sw
         endif
+    endif
+
+    " opening of a class, defined type or function
+    if pline =~ '^\s*\(function\|class\|define\) [a-z_:]*($'
+        let ind = indent(pnum) + &sw + 2
     endif
 
     " Don't actually shift over for } else {
