@@ -17,27 +17,26 @@ if exists("*GetPuppetIndent")
     finish
 endif
 
-function! s:OpenBraceLine(lnum)
+function! s:OpenBraceLineAndCol(lnum)
     let save_cursor = getcurpos()
     call cursor(a:lnum, 1)
-    let [rlnum, rcol] = searchpairpos('{\|\[\|(', '', '}\|\]\|)', 'nbW')
+    let result = searchpairpos('{\|\[\|(', '', '}\|\]\|)', 'nbW')
     call setpos('.', save_cursor)
+    return result
+endfunction
+
+function! s:OpenBraceLine(lnum)
+    let [rlnum, rcol] = s:OpenBraceLineAndCol(a:lnum)
     return rlnum
 endfunction
 
 function! s:OpenBraceCol(lnum)
-    let save_cursor = getcurpos()
-    call cursor(a:lnum, 1)
-    let [rlnum, rcol] = searchpairpos('{\|\[\|(', '', '}\|\]\|)', 'nbW')
-    call setpos('.', save_cursor)
+    let [rlnum, rcol] = s:OpenBraceLineAndCol(a:lnum)
     return rcol - 1
 endfunction
 
 function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
-    let save_cursor = getcurpos()
-    call cursor(a:lnum, 1)
-    let [rlnum, rcol] = searchpairpos('{\|\[\|(', '', '}\|\]\|)', 'nbW')
-    call setpos('.', save_cursor)
+    let [rlnum, rcol] = s:OpenBraceLineAndCol(a:lnum)
     if rlnum == 0
         return 0
     endif

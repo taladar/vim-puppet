@@ -2,6 +2,48 @@ function! puppet#align#IndentLevel(lnum)
     return indent(a:lnum) / &shiftwidth
 endfunction
 
+" for this to work the cursor needs to be within the same curly braces or
+" parentheses as the arrows to align
+function! puppet#align#AlignArrows()
+    let save_cursor = getcurpos()
+
+    let [slnum, scol] = searchpairpos('\({\|(\)', '', '\(}\|)\)', 'nbW')
+    if slnum == 0 && scol == 0
+        return
+    endif
+
+    let align_col = 0
+    let [alnum, acol] = searchpos('=>', 'bW', slnum)
+    while (alnum != 0 && acol != 0) && ( alnum > slnum || acol > scol )
+      let [aslnum, ascol] = searchpairpos('\({\|(\)', '', '\(}\|)\)', 'nbW')
+      if slnum == aslnum && scol == ascol
+          " if this is not the case we are inside some sort of nested hash,
+          " ignore these for alignment
+
+          let align_col = max([align_col, col('.')])
+      endif
+      let [alnum, acol] = searchpos('=>', 'bW', slnum)
+    endwhile
+
+    call setpos('.', save_cursor)
+
+    let [alnum, acol] = searchpos('=>', 'bW', slnum)
+    while (alnum != 0 && acol != 0) && ( alnum > slnum || acol > scol )
+      let [aslnum, ascol] = searchpairpos('\({\|(\)', '', '\(}\|)\)', 'nbW')
+      if slnum == aslnum && scol == ascol
+          " if this is not the case we are inside some sort of nested hash,
+          " ignore these for alignment
+
+          let insert_spaces = align_col - col('.')
+          let is = printf('%-' . insert_spaces . 's', '')
+          execute "normal! i" . is
+      endif
+      let [alnum, acol] = searchpos('=>', 'bW', slnum)
+    endwhile
+
+    call setpos('.', save_cursor)
+endfunction
+
 function! puppet#align#LinesInBlock(lnum)
     let lines = []
     let indent_level = puppet#align#IndentLevel(a:lnum)

@@ -97,6 +97,30 @@ describe 'indentation on new line =>'
           Expect line('.') == 4
           Expect col('.') == 12
         end
+
+        it 'indents comma in hash parameter value on first parameter to open curly brace column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>ofoo => { 'hello' => 'world'\<CR>,"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    foo => { 'hello' => 'world'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(3) == '           ,'
+          Expect line('.') == 3
+          Expect col('.') == 12
+        end
+
+        it 'indents comma in hash parameter value on first parameter to open curly brace column after filling in the value arrow on the line'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>ofoo => { 'hello' => 'world'\<CR>, 'foo' => $bar"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    foo => { 'hello' => 'world'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(3) == "           , 'foo'   => $bar"
+          Expect line('.') == 3
+          Expect col('.') == 28
+        end
       end
 
       context "further parameters =>"
