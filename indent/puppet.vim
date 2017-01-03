@@ -42,6 +42,15 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
         return 0
     endif
     let rline = getline(rlnum)
+    if rline =~ '^\s*) {$' && strcharpart(rline, rcol - 1, 1) == '{'
+      " end of parameter list or multi-line if condition, look for start of
+      " parenthesis to base indent on that
+      let save_cursor = getcurpos()
+      call cursor(rlnum, 1)
+      let [rlnum2, rcol2] = searchpairpos('(', '', ')', 'nbW')
+      call setpos('.', save_cursor)
+      return indent(rlnum2)
+    endif
     if rline =~ '^\s*\([a-z0-9:]\+\|\(if\|unless\|case\)(.*)\) {' && strcharpart(rline, rcol - 1, 1) == '{'
       return indent(rlnum)
     endif

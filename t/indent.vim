@@ -517,6 +517,52 @@ describe 'indentation on new line =>'
         end
       end
     end
+    context "body =>"
+      it 'indents body by 2 spaces relative to starting line with keyword'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iclass saltfoobar(\<CR>$foo = bar\<CR>, $baz = quux\<CR>) {\<CR> "
+        Expect getline(1) == "class saltfoobar("
+        Expect getline(2) == '    $foo = bar'
+        Expect getline(3) == '  , $baz = quux'
+        Expect getline(4) == '  ) {'
+        Expect GetPuppetIndent() == 2
+        Expect getline(5) == '   '
+        Expect line('.') == 5
+        Expect col('.') == 3
+      end
+    end
+    context "closing curly brace =>"
+      it 'indents closing body curly brace of empty body to column of starting keyword'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iclass saltfoobar(\<CR>$foo = bar\<CR>, $baz = quux\<CR>) {\<CR>}"
+        Expect getline(1) == "class saltfoobar("
+        Expect getline(2) == '    $foo = bar'
+        Expect getline(3) == '  , $baz = quux'
+        Expect getline(4) == '  ) {'
+        Expect GetPuppetIndent() == 0
+        Expect getline(5) == '}'
+        Expect line('.') == 5
+        Expect col('.') == 1
+      end
+
+      it 'indents closing body curly brace of body with empty if to column of starting keyword'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iclass saltfoobar(\<CR>$foo = bar\<CR>, $baz = quux\<CR>) {\<CR>if($foo) {\<CR>}\<CR>}"
+        Expect getline(1) == "class saltfoobar("
+        Expect getline(2) == '    $foo = bar'
+        Expect getline(3) == '  , $baz = quux'
+        Expect getline(4) == '  ) {'
+        Expect getline(5) == '  if($foo) {'
+        Expect getline(6) == '  }'
+        Expect GetPuppetIndent() == 0
+        Expect getline(7) == '}'
+        Expect line('.') == 7
+        Expect col('.') == 1
+      end
+    end
   end
 
   context "defined type =>"
