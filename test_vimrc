@@ -30,7 +30,7 @@ function! s:PuppetBuffer()
   " let b:closer_flags = '([{'
   " call closer#enable()
   inoremap <buffer> <silent> > ><Esc>:call puppet#align#AlignArrows()<CR>$a
-  execute "normal ifoo { 'bar':\<ESC>ofoo => { 'hello' => 'world'\<CR>, 'foo' => $bar"
+  execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>,"
 endfunction
 
 command PuppetBuffer :call s:PuppetBuffer()

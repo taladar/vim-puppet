@@ -11,7 +11,7 @@ let b:did_indent = 1
 
 setlocal autoindent smartindent
 setlocal indentexpr=GetPuppetIndent()
-setlocal indentkeys+=0],0),0&,0\|,0(,{
+setlocal indentkeys+=0],0),0&,0\|,0(,{,0\,
 
 if exists("*GetPuppetIndent")
     finish
@@ -23,6 +23,15 @@ function! s:OpenBraceLineAndCol(lnum)
     let result = searchpairpos('{\|\[\|(', '', '}\|\]\|)', 'nbW')
     call setpos('.', save_cursor)
     return result
+endfunction
+
+function! s:OpenBraceChar(lnum)
+    let [rlnum, rcol] = s:OpenBraceLineAndCol(a:lnum)
+    if rlnum < 1 || rcol < 1
+        return ""
+    endif
+    let rline = getline(rlnum)
+    return strcharpart(rline, rcol - 1, 1)
 endfunction
 
 function! s:OpenBraceLine(lnum)
@@ -74,8 +83,8 @@ function! GetPuppetIndent()
     let pline = getline(pnum)
     let ind = indent(pnum)
 
-    " Utrecht style leading commas for resources
-    if ppnum != 0 && pline =~ '^    ' && ( ppline =~ ':$' || ppline =~ '($' )
+    " Utrecht style leading commas
+    if line =~ '^\s*,' && s:OpenBraceChar(v:lnum) != '['
         let ind = indent(s:OpenBraceLine(v:lnum)) + &sw
     endif
 
