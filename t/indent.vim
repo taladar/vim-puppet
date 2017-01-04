@@ -497,6 +497,18 @@ describe 'indentation on new line =>'
         Expect col('.') == 3
       end
 
+      it 'indents case body with list of values by 2 spaces after hitting return'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR>'foo','bar': {\<CR> "
+        Expect getline(1) == "case($foo) {"
+        Expect getline(2) == "'foo','bar': {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(3) == '   '
+        Expect line('.') == 3
+        Expect col('.') == 3
+      end
+
       it 'indents closing curly brace of empty case body to column of opening curly brace'
         Expect line('.') == 1
         Expect col('.') == 1
@@ -704,6 +716,21 @@ describe 'indentation on new line =>'
           Expect line('.') == 4
           Expect col('.') == 5
         end
+      end
+    end
+  end
+
+  context "function call with code block =>"
+    context "body =>"
+      it 'indents body by two spaces relative to function identifier line'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal ieach($foo) |$bar| {\<CR> "
+        Expect getline(1) == "each($foo) |$bar| {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(2) == '   '
+        Expect line('.') == 2
+        Expect col('.') == 3
       end
     end
   end

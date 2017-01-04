@@ -50,6 +50,16 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
         return 0
     endif
     let rline = getline(rlnum)
+    if rline =~ '| {$' && strcharpart(rline, rcol - 1, 1) == '{'
+      " start of body passed to higher order function
+      " look for function name line and base indent on that
+      let save_cursor = getcurpos()
+      call cursor(rlnum, rcol - 3)
+      let [slambdaline, slambacol] = searchpos(') |', 'bW')
+      let [openparline, openparcol] = searchpairpos('(', '', ')', 'nbW')
+      call setpos('.', save_cursor)
+      return indent(openparline)
+    endif
     if rline =~ '^\s*) {$' && strcharpart(rline, rcol - 1, 1) == '{'
       " end of parameter list or multi-line if condition, look for start of
       " parenthesis to base indent on that
@@ -112,6 +122,11 @@ function! GetPuppetIndent()
             let ind = indent(s:OpenBraceLine(v:lnum))
           endif
         endif
+    endif
+
+    " opening of higher order function lambda body
+    if pline =~ '| {'
+        let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum) + &sw
     endif
 
     " opening of resource body
