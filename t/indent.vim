@@ -482,6 +482,17 @@ describe 'indentation on new line =>'
         Expect col('.') == 1
       end
 
+      it 'indents body by 0 spaces after hitting return on case without parentheses around variable'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase $foo  {\<CR> "
+        Expect getline(1) == "case $foo  {"
+        Expect GetPuppetIndent() == 0
+        Expect getline(2) == ' '
+        Expect line('.') == 2
+        Expect col('.') == 1
+      end
+
       it 'indents closing curly brace of empty main body to opening curly brace line indent'
         Expect line('.') == 1
         Expect col('.') == 1

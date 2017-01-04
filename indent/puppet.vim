@@ -75,6 +75,9 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
       call setpos('.', save_cursor)
       return indent(rlnum2)
     endif
+    if rline =~ '^\s*case \$[a-z0-9:_]*\s*{'
+      return indent(rlnum)
+    endif
     if rline =~ '^\s*[a-z0-9:]\+ {' && strcharpart(rline, rcol - 1, 1) == '{'
       return indent(rlnum)
     endif
@@ -102,6 +105,10 @@ function! GetPuppetIndent()
     " Utrecht style leading commas
     if line =~ '^\s*,' && s:OpenBraceChar(v:lnum) != '['
         let ind = indent(s:OpenBraceLine(v:lnum)) + &sw
+    endif
+
+    if pline =~ '^\s*case \$[a-z0-9:_]*\s*{'
+        return indent(pnum)
     endif
 
     " Lines after lines with unclosed square brackets or curly braces
