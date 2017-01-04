@@ -391,6 +391,29 @@ describe 'indentation on new line =>'
           Expect col('.') == 3
         end
 
+        it 'indents body by 2 spaces after hitting return after if with and in condition'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iif(foo == bar and baz == quux) {\<CR> "
+          Expect GetPuppetIndent() == 2
+          Expect getline(1) == "if(foo == bar and baz == quux) {"
+          Expect getline(2) == '   '
+          Expect line('.') == 2
+          Expect col('.') == 3
+        end
+
+        it 'indents body by 2 spaces after hitting return when first line of body is empty'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iif(foo == bar) {\<CR>\<CR> "
+          Expect GetPuppetIndent() == 2
+          Expect getline(1) == "if(foo == bar) {"
+          Expect getline(2) == ''
+          Expect getline(3) == '   '
+          Expect line('.') == 3
+          Expect col('.') == 3
+        end
+
         it 'indents body by 2 spaces after o on condition line'
           Expect line('.') == 1
           Expect col('.') == 1

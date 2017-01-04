@@ -50,6 +50,9 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
         return 0
     endif
     let rline = getline(rlnum)
+    if rline =~ '^\s*} else {$'
+        return indent(rlnum)
+    endif
     if rline =~ '| {$' && strcharpart(rline, rcol - 1, 1) == '{'
       " start of body passed to higher order function
       " look for function name line and base indent on that
@@ -60,16 +63,16 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
       call setpos('.', save_cursor)
       return indent(openparline)
     endif
-    if rline =~ '^\s*) {$' && strcharpart(rline, rcol - 1, 1) == '{'
-      " end of parameter list or multi-line if condition, look for start of
+    if rline =~ ') {$' && strcharpart(rline, rcol - 1, 1) == '{'
+      " end of parameter list or if/unless condition or case, look for start of
       " parenthesis to base indent on that
       let save_cursor = getcurpos()
-      call cursor(rlnum, 1)
+      call cursor(rlnum, rcol - 3)
       let [rlnum2, rcol2] = searchpairpos('(', '', ')', 'nbW')
       call setpos('.', save_cursor)
       return indent(rlnum2)
     endif
-    if rline =~ '^\s*\([a-z0-9:]\+\|\(if\|unless\|case\)(.*)\) {' && strcharpart(rline, rcol - 1, 1) == '{'
+    if rline =~ '^\s*[a-z0-9:]\+ {' && strcharpart(rline, rcol - 1, 1) == '{'
       return indent(rlnum)
     endif
     if rline =~ '^\s*\(function\|class\|define\) [a-z:_]*($' && strcharpart(rline, rcol - 1, 1) == '('
@@ -109,16 +112,21 @@ function! GetPuppetIndent()
         let ind = s:OpenBraceCol(v:lnum) + 1
     endif
 
+    " body of else
+    if pline =~ '^\s*} else {$'
+        let ind = indent(pnum) + &sw
+    endif
+
     " opening { of if or case body
     if pline =~ ') {$'
         if pline =~ '^\s*) {$'
           " multi-line condition if
           let ind = indent(s:OpenBraceLine(v:lnum))
         else
-          if pline =~ '^\s*if('
+          if pline =~ '^\s*if\>'
             " single-line condition if
             let ind = indent(s:OpenBraceLine(v:lnum)) + &sw
-          elseif pline =~ '^\s*case('
+          elseif pline =~ '^\s*case\>'
             let ind = indent(s:OpenBraceLine(v:lnum))
           endif
         endif
