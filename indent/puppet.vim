@@ -53,6 +53,9 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
     if rline =~ '^\s*} else {$'
         return indent(rlnum)
     endif
+    if rline =~ ': {'
+        return indent(rlnum)
+    endif
     if rline =~ '| {$' && strcharpart(rline, rcol - 1, 1) == '{'
       " start of body passed to higher order function
       " look for function name line and base indent on that

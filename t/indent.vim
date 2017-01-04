@@ -556,6 +556,25 @@ describe 'indentation on new line =>'
         Expect line('.') == 4
         Expect col('.') == 1
       end
+
+      it 'indents closing curly brace of case body with a file resource as body to column of opening curly brace'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR>'foo': {\<CR>file { '/etc/motd':\<CR>ensure => file\<CR>, owner => root\<CR>, group => root\<CR>, mode => '644'\<CR>, content => 'Foobar'\<CR>}\<CR>}"
+        Expect getline(1) == "case($foo) {"
+        Expect getline(2) == "'foo': {"
+        Expect getline(3) == "  file { '/etc/motd':"
+        Expect getline(4) == "      ensure  => file"
+        Expect getline(5) == "    , owner   => root"
+        Expect getline(6) == "    , group   => root"
+        Expect getline(7) == "    , mode    => '644'"
+        Expect getline(8) == "    , content => 'Foobar'"
+        Expect getline(9) == "  }"
+        Expect GetPuppetIndent() == 0
+        Expect getline(10) == '}'
+        Expect line('.') == 10
+        Expect col('.') == 1
+      end
     end
   end
 
