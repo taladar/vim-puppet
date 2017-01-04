@@ -223,6 +223,17 @@ describe 'indentation on new line =>'
           Expect line('.') == 4
           Expect col('.') == 1
         end
+
+        it 'unindents the closing curly brace in a two parameter resource with type with scope and underscore'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo::bar_baz::baz_quux { 'bar':\<CR>hello => world\<CR>, foo => bar\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo::bar_baz::baz_quux { 'bar':"
+          Expect getline(4) == '}'
+          Expect line('.') == 4
+          Expect col('.') == 1
+        end
       end
     end
 

@@ -78,7 +78,7 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
     if rline =~ '^\s*case \$[a-z0-9:_]*\s*{'
       return indent(rlnum)
     endif
-    if rline =~ '^\s*[a-z0-9:]\+ {' && strcharpart(rline, rcol - 1, 1) == '{'
+    if rline =~ '^\s*[a-z0-9:_]\+ {' && strcharpart(rline, rcol - 1, 1) == '{'
       return indent(rlnum)
     endif
     if rline =~ '^\s*\(function\|class\|define\) [a-z:_]*($' && strcharpart(rline, rcol - 1, 1) == '('
@@ -87,13 +87,21 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
     return rcol - 1
 endfunction
 
+function! s:PrevNonBlankNonComment(lnum)
+    let res = prevnonblank(a:lnum - 1)
+    while getline(res) =~ '^\s*#'
+        let res = prevnonblank(res - 1)
+    endwhile
+    return res
+endfunction
+
 function! GetPuppetIndent()
-    let pnum = prevnonblank(v:lnum - 1)
+    let pnum = s:PrevNonBlankNonComment(v:lnum)
     if pnum == 0
        return 0
     endif
 
-    let ppnum = prevnonblank(pnum - 1)
+    let ppnum = s:PrevNonBlankNonComment(pnum)
     if ppnum != 0
       let ppline = getline(ppnum)
     endif
