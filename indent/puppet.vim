@@ -121,7 +121,7 @@ function! GetPuppetIndent()
 
     " line after line closing an array or hash value but not in parameter list
     if pline =~ '^\s*\(\]\|}\)' && line !~ '^\s*,'
-        let ind = indent(s:OpenBraceLine(v:lnum - 1))
+        let ind = indent(s:OpenBraceLine(pnum))
     endif
 
     " Lines after lines with unclosed square brackets or curly braces

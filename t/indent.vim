@@ -826,6 +826,20 @@ describe 'indentation on new line =>'
       Expect col('.') == 16
     end
 
+    it 'indents line after multi-line array value with variable concat correctly even if there is an empty line in between'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal i$foo = [ 'bar'\<CR>, 'baz'\<CR>] + $bar\<CR>\<CR>$hello = 'world'"
+      Expect getline(1) == "$foo = [ 'bar'"
+      Expect getline(2) == "       , 'baz'"
+      Expect getline(3) == "       ] + $bar"
+      Expect getline(4) == ""
+      Expect GetPuppetIndent() == 0
+      Expect getline(5) == "$hello = 'world'"
+      Expect line('.') == 5
+      Expect col('.') == 16
+    end
+
     it 'indents line after multi-line hash value correctly'
       Expect line('.') == 1
       Expect col('.') == 1
