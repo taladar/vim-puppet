@@ -12,6 +12,7 @@ function! puppet#align#Format()
     " join { after if line to end of if line
     execute range . ':s/^\(\s*\)if(\(.*\))\_\s*{$/\1if(\2) {/'
     " TODO: add empty line between resources,...
+    " TODO: trailing whitespace removal
 
     call cursor(v:lnum, 1)
 
@@ -39,13 +40,26 @@ function! puppet#align#FindArrows()
     let [slnum, scol] = searchpairpos('{', '', '}', 'nbW')
     let [elnum, ecol] = searchpairpos('{', '', '}', 'nW')
     call cursor(slnum, scol)
+    let prevarrowlnum = - 1
     let [arrowlnum, arrowcol] = searchpos('=>', 'W')
     while  arrowlnum >= 1 && arrowcol >= 1 && ((elnum <= 0 || arrowlnum < elnum) || (elnum <= 0 || ecol <= 0 || (arrowlnum == elnum && arrowcol < ecol)))
       let [arrowopencurlylnum, arrowopencurlycol] = searchpairpos('{', '', '}', 'nbW')
-      if arrowopencurlylnum == slnum && arrowopencurlycol == scol
-        " we are not in a nested hash
-        call add(result, [arrowlnum, arrowcol])
+      if arrowopencurlylnum != slnum || arrowopencurlycol != scol
+        " we are in a nested hash
+        let prevarrowlnum = arrowlnum
+        let [arrowlnum, arrowcol] = searchpos('=>', 'W')
+        continue
       endif
+
+      if prevarrowlnum > 0 && prevarrowlnum == arrowlnum
+        " we are on the second or later arrow in this hash on this line
+        let prevarrowlnum = arrowlnum
+        let [arrowlnum, arrowcol] = searchpos('=>', 'W')
+        continue
+      endif
+
+      call add(result, [arrowlnum, arrowcol])
+      let prevarrowlnum = arrowlnum
       let [arrowlnum, arrowcol] = searchpos('=>', 'W')
     endwhile
 
