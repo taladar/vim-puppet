@@ -798,4 +798,32 @@ describe 'indentation on new line =>'
       end
     end
   end
+
+  context "variable assignments =>"
+    it 'indents line after multi-line array value correctly'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal i$foo = [ 'bar'\<CR>, 'baz'\<CR>]\<CR>$hello = 'world'"
+      Expect getline(1) == "$foo = [ 'bar'"
+      Expect getline(2) == "       , 'baz'"
+      Expect getline(3) == "       ]"
+      Expect GetPuppetIndent() == 0
+      Expect getline(4) == "$hello = 'world'"
+      Expect line('.') == 4
+      Expect col('.') == 16
+    end
+
+    it 'indents line after multi-line hash value correctly'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal i$foo = { 'bar' => 'rab'\<CR>, 'baz' => 'zab'\<CR>}\<CR>$hello = 'world'"
+      Expect getline(1) == "$foo = { 'bar' => 'rab'"
+      Expect getline(2) == "       , 'baz' => 'zab'"
+      Expect getline(3) == "       }"
+      Expect GetPuppetIndent() == 0
+      Expect getline(4) == "$hello = 'world'"
+      Expect line('.') == 4
+      Expect col('.') == 16
+    end
+  end
 end
