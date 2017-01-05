@@ -70,7 +70,7 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
       " end of parameter list or if/unless condition or case, look for start of
       " parenthesis to base indent on that
       let save_cursor = getcurpos()
-      call cursor(rlnum, rcol - 3)
+      call cursor(rlnum, rcol - 2)
       let [rlnum2, rcol2] = searchpairpos('(', '', ')', 'nbW')
       call setpos('.', save_cursor)
       return indent(rlnum2)

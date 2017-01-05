@@ -768,6 +768,28 @@ describe 'indentation on new line =>'
       end
 
       context "closing parenthesis =>"
+        it 'indents closing parentheses by two spaces after hitting return on empty parameter list'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifunction saltfoobar::do_stuff(\<CR>) {"
+          Expect getline(1) == "function saltfoobar::do_stuff("
+          Expect GetPuppetIndent() == 2
+          Expect getline(2) == '  ) {'
+          Expect line('.') == 2
+          Expect col('.') == 5
+        end
+
+        it 'indents closing parentheses by two spaces after hitting == on empty parameter list where the closing parenthesis is not indented at all yet'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifunction saltfoobar::do_stuff(\<ESC>o\<ESC>0i) {\<ESC>=="
+          Expect getline(1) == "function saltfoobar::do_stuff("
+          Expect GetPuppetIndent() == 2
+          Expect getline(2) == '  ) {'
+          Expect line('.') == 2
+          Expect col('.') == 5
+        end
+
         it 'indents closing parentheses by two spaces after hitting return'
           Expect line('.') == 1
           Expect col('.') == 1
@@ -851,6 +873,22 @@ describe 'indentation on new line =>'
       Expect getline(4) == "$hello = 'world'"
       Expect line('.') == 4
       Expect col('.') == 16
+    end
+  end
+
+  context "bare expressions (as in return from function) =>"
+    context "hashes =>"
+      it 'indents single line hash value inside if correctly'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iif($foo) {\<CR>{ 'hello' => 'world', 'bar' => 'baz' }\<CR>}"
+        Expect getline(1) == "if($foo) {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(2) == "  { 'hello' => 'world', 'bar' => 'baz' }"
+        Expect getline(3) == "}"
+        Expect line('.') == 3
+        Expect col('.') == 1
+      end
     end
   end
 end
