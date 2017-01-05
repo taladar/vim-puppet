@@ -854,3 +854,198 @@ describe 'indentation on new line =>'
     end
   end
 end
+
+describe "alignment of arrow =>"
+  before
+    new
+    set filetype=puppet
+    " let b:closer = 1
+    " let b:closer_flags = '([{'
+    " call closer#enable()
+  end
+
+  after
+    close!
+  end
+
+  context "resources =>"
+    it 'aligns arrows correctly if second of two parameters is the same length as the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [3,11]]
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => world"
+      Expect getline(3) == "  , world => hello"
+      Expect getline(4) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is the same length as the first and first has single line nested hash value'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => { 'wo' => 'rld' }\<CR>, world => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [3,11]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => { 'wo' => 'rld' }"
+      Expect getline(3) == "  , world => hello"
+      Expect getline(4) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is one char longer than the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worlds => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,12], [3,12]]
+      Expect puppet#align#FindAlignColumn() == 12
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello  => world"
+      Expect getline(3) == "  , worlds => hello"
+      Expect getline(4) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is two chars longer than the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldly => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,13], [3,13]]
+      Expect puppet#align#FindAlignColumn() == 13
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello   => world"
+      Expect getline(3) == "  , worldly => hello"
+      Expect getline(4) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first two'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [3,11], [4,11]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => world"
+      Expect getline(3) == "  , world => hello"
+      Expect getline(4) == "  , hollo => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is one char longer than first two'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>, hollow => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,12], [3,12], [4,12]]
+      Expect puppet#align#FindAlignColumn() == 12
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello  => world"
+      Expect getline(3) == "  , world  => hello"
+      Expect getline(4) == "  , hollow => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is one char shorter than first two'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>, hell => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [3,11], [4,11]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => world"
+      Expect getline(3) == "  , world => hello"
+      Expect getline(4) == "  , hell  => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first but the second is one char longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worlds => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,12], [3,12], [4,12]]
+      Expect puppet#align#FindAlignColumn() == 12
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello  => world"
+      Expect getline(3) == "  , worlds => hello"
+      Expect getline(4) == "  , hollo  => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first but the second is two chars longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldly => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,13], [3,13], [4,13]]
+      Expect puppet#align#FindAlignColumn() == 13
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello   => world"
+      Expect getline(3) == "  , worldly => hello"
+      Expect getline(4) == "  , hollo   => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first but the second is three chars longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlie => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,14], [3,14], [4,14]]
+      Expect puppet#align#FindAlignColumn() == 14
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello    => world"
+      Expect getline(3) == "  , worldlie => hello"
+      Expect getline(4) == "  , hollo    => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first but the second is four chars longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15]]
+      Expect puppet#align#FindAlignColumn() == 15
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello     => world"
+      Expect getline(3) == "  , worldlier => hello"
+      Expect getline(4) == "  , hollo     => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if the second and third of three parameters are four chars longer than the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollowman => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15]]
+      Expect puppet#align#FindAlignColumn() == 15
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello     => world"
+      Expect getline(3) == "  , worldlier => hello"
+      Expect getline(4) == "  , hollowman => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if the second, third and fourth of four parameters are four chars longer than the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollowman => world\<CR>, workhorse => horsework\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15], [5,15]]
+      Expect puppet#align#FindAlignColumn() == 15
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello     => world"
+      Expect getline(3) == "  , worldlier => hello"
+      Expect getline(4) == "  , hollowman => world"
+      Expect getline(5) == "  , workhorse => horsework"
+      Expect getline(6) == "}"
+    end
+
+    it 'aligns arrows correctly if the second, third of four parameters are four chars longer than the first and the fourth is two chars longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollowman => world\<CR>, hoarser => horse\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15], [5,15]]
+      Expect puppet#align#FindAlignColumn() == 15
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello     => world"
+      Expect getline(3) == "  , worldlier => hello"
+      Expect getline(4) == "  , hollowman => world"
+      Expect getline(5) == "  , hoarser   => horse"
+      Expect getline(6) == "}"
+    end
+  end
+end

@@ -30,7 +30,7 @@ function! s:PuppetBuffer()
   " let b:closer_flags = '([{'
   " call closer#enable()
   inoremap <buffer> <silent> > ><Esc>:call puppet#align#AlignArrows()<CR>$a
-  execute "normal i$foo = { 'bar' => 'rab'\<CR>, 'baz' => 'zab'\<CR>}\<CR>$hello = 'world'"
+  execute "normal icase($foo) {\<CR>'foo': {\<CR>file { '/etc/motd':\<CR>ensure => file\<CR>, owner => root\<CR>, group => root\<CR>, mode => '644'\<CR>, content => 'Foobar'\<CR>}\<CR>}"
 endfunction
 
 command PuppetBuffer :call s:PuppetBuffer()
