@@ -81,7 +81,7 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
     if rline =~ '^\s*[a-z0-9:_]\+ {' && strcharpart(rline, rcol - 1, 1) == '{'
       return indent(rlnum)
     endif
-    if rline =~ '^\s*\(function\|class\|define\) [a-z:_]*($' && strcharpart(rline, rcol - 1, 1) == '('
+    if rline =~ '^\s*\(function\|class\|define\) [a-z:_]*\s*($' && strcharpart(rline, rcol - 1, 1) == '('
       return indent(rlnum)
     endif
     return rcol - 1
@@ -126,7 +126,7 @@ function! GetPuppetIndent()
 
     " Lines after lines with unclosed square brackets or curly braces
     " should align to the open brace
-    if pline =~ '\[[^\]]*$' || pline =~ '{[^}]*$'
+    if line =~ '^\s*,' && (pline =~ '\[[^\]]*$' || pline =~ '{[^}]*$')
         let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum)
     endif
 
@@ -193,8 +193,12 @@ function! GetPuppetIndent()
     endif
 
     " opening of a class, defined type or function
-    if pline =~ '^\s*\(function\|class\|define\) [a-z_:]*($'
-        let ind = indent(pnum) + &sw + 2
+    if pline =~ '^\s*\(function\|class\|define\) [a-z_:]*\s*($'
+        if line =~ '^\s*)'
+          let ind = indent(pnum) + &sw
+        else
+          let ind = indent(pnum) + &sw + 2
+        endif
     endif
 
     " Don't actually shift over for } else {

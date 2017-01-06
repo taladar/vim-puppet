@@ -787,7 +787,7 @@ describe 'indentation on new line =>'
           Expect GetPuppetIndent() == 2
           Expect getline(2) == '  ) {'
           Expect line('.') == 2
-          Expect col('.') == 5
+          Expect col('.') == 3
         end
 
         it 'indents closing parentheses by two spaces after hitting return'
