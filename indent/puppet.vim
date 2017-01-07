@@ -67,22 +67,26 @@ function! GetPuppetIndent()
     let pline = getline(pnum)
     let ind = indent(pnum)
 
+    let oblnum = s:OpenBraceLine(v:lnum)
+    let obline = getline(oblnum)
+    let obcol = s:OpenBraceCol(v:lnum)
+    let obind = indent(oblnum)
+
     " TODO: indent of first line after resource title in semicolon limited
     " resources
     " TODO: indent of if body with no parentheses around condition
-    " TODO: replace all the OpenBraceLine calls with variable
     " TODO: indent of closing } with resource relationship after it
     " TODO: indent of , in multi line parameter list of function call
     " TODO: indent of lines after multi line parameter list of function call
 
     if pline =~ '^\s*case \$[a-z0-9:_]*\s*{'
-        return indent(pnum)
+        return ind
     endif
 
     " Utrecht style leading commas
     if line =~ '^\s*,'
-        if pline =~ '^\s*,' && s:OpenBraceLine(v:lnum) < pnum
-            return indent(pnum)
+        if pline =~ '^\s*,' && oblnum < pnum
+            return ind
         elseif pline =~ '^\s*}$' || pline =~ '^\s*\]$'
             " nested hash or array end
             let obl = s:OpenBraceLine(pnum)
@@ -91,135 +95,132 @@ function! GetPuppetIndent()
             else
               return indent(obl) - 2
             endif
-        elseif getline(s:OpenBraceLine(v:lnum)) =~ ':$'
-            return indent(s:OpenBraceLine(v:lnum)) + &sw
-        elseif getline(s:OpenBraceLine(v:lnum)) =~ '{ \[' && s:OpenBraceChar(v:lnum) == '{'
-            return indent(s:OpenBraceLine(v:lnum)) + &sw
-        elseif getline(s:OpenBraceLine(v:lnum)) =~ ') {$'
-            return indent(s:OpenBraceLine(v:lnum)) + &sw
+        elseif obline =~ ':$'
+            return obind + &sw
+        elseif obline =~ '{ \[' && s:OpenBraceChar(v:lnum) == '{'
+            return obind + &sw
+        elseif obline =~ ') {$'
+            return obind + &sw
         elseif s:OpenBraceChar(v:lnum) == '('
-            return indent(s:OpenBraceLine(v:lnum)) + &sw
+            return obind + &sw
         else
-            return s:OpenBraceCol(v:lnum)
+            return obcol
         endif
     endif
 
     " opening of higher order function lambda body
-    if getline(s:OpenBraceLine(v:lnum)) =~ '| {$'
+    if obline =~ '| {$'
         if line =~ '^\s*}$'
-            return indent(s:OpenBraceLine(v:lnum))
+            return obind
         else
-            return indent(s:OpenBraceLine(v:lnum)) + &sw
+            return obind + &sw
         endif
     endif
 
     " if, main case, class, defined type or function body
-    if getline(s:OpenBraceLine(v:lnum)) =~ ') {$'
-        if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*) {$'
+    if obline =~ ') {$'
+        if obline =~ '^\s*) {$'
             " multi-line condition if or class/defined type/function parameter
             " list
             if line =~ '^\s*}$'
-                return indent(s:OpenBraceLine(s:OpenBraceLine(v:lnum)))
+                return indent(s:OpenBraceLine(oblnum))
             else
-                return indent(s:OpenBraceLine(s:OpenBraceLine(v:lnum))) + &sw
+                return indent(s:OpenBraceLine(oblnum)) + &sw
             endif
-        elseif getline(s:OpenBraceLine(v:lnum)) =~ '^\s*if\>'
+        elseif obline =~ '^\s*if\>'
             " single-line condition if
             if line =~ '^\s*}$'
-                return indent(s:OpenBraceLine(v:lnum))
+                return obind
             elseif line =~ '^\s*} else {$'
-                return indent(s:OpenBraceLine(v:lnum))
+                return obind
             else
-                return indent(s:OpenBraceLine(v:lnum)) + &sw
+                return obind + &sw
             endif
-        elseif getline(s:OpenBraceLine(v:lnum)) =~ '^\s*case\>'
+        elseif obline =~ '^\s*case\>'
             " main case body is not indented
-            return indent(s:OpenBraceLine(v:lnum))
+            return obind
         endif
     endif
 
     " if without condition
-    if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*if.*{$'
+    if obline =~ '^\s*if.*{$'
         if line =~ '^\s*}'
-            return indent(s:OpenBraceLine(v:lnum))
+            return obind
         else
-            return indent(s:OpenBraceLine(v:lnum)) + &sw
+            return obind + &sw
         endif
     endif
 
     " body of else
-    if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*} else {$'
+    if obline =~ '^\s*} else {$'
         if line =~ '^\s*}$'
-            return indent(s:OpenBraceLine(v:lnum))
+            return obind
         else
-            return indent(s:OpenBraceLine(v:lnum)) + &sw
+            return obind + &sw
         endif
     endif
 
     if line =~ '^\s*) {$'
-        if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*\(function\|class\|define\)'
+        if obline =~ '^\s*\(function\|class\|define\)'
           " closing of parameter list of function, class of defined type
-          return indent(s:OpenBraceLine(v:lnum)) + &sw
+          return obind + &sw
         else
           " closing of multi-line if or unless condition
-          return s:OpenBraceCol(v:lnum)
+          return obcol
         endif
     endif
 
     " case body (the per case one, not the main one)
-    if getline(s:OpenBraceLine(v:lnum)) =~ ': {$'
+    if obline =~ ': {$'
         if line =~ '^\s*}'
           " empty case body with immediate closing curly brace
-          return indent(s:OpenBraceLine(v:lnum))
+          return obind
         else
-          return indent(s:OpenBraceLine(v:lnum)) + &sw
-        endif
-    endif
-
-    " opening of a class with parameter list, defined type or function
+          return obind + &sw
         endif
     endif
 
     " multi-line condition
     if line =~ '^\s*\(and\|or\)\>'
-        return s:OpenBraceCol(v:lnum) + 1
+        return obcol + 1
     endif
 
-    if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*\(function\|class\|define\) [a-z_:]*\s*($'
+    " opening of a class with parameter list, defined type or function
+    if obline =~ '^\s*\(function\|class\|define\) [a-z_:]*\s*($'
         if line =~ '^\s*)'
-          return indent(s:OpenBraceLine(v:lnum)) + &sw
+          return obind + &sw
         else
-          return indent(s:OpenBraceLine(v:lnum)) + &sw + 2
+          return obind + &sw + 2
         endif
     endif
 
     " opening of a class without parameter list
-    if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*class [a-z_:]*\s*{$'
+    if obline =~ '^\s*class [a-z_:]*\s*{$'
         if line =~ '^\s*}'
-          return indent(s:OpenBraceLine(v:lnum))
+          return obind
         else
-          return indent(s:OpenBraceLine(v:lnum)) + &sw
+          return obind + &sw
         endif
     endif
 
     " opening of a node
-    if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*node.*{$'
+    if obline =~ '^\s*node.*{$'
         if line =~ '^\s*}'
-          return indent(s:OpenBraceLine(v:lnum))
+          return obind
         else
-          return indent(s:OpenBraceLine(v:lnum)) + &sw
+          return obind + &sw
         endif
     endif
 
     " opening of resource body
     if pline =~ ':$'
         if line =~ '^\s*}'
-            return indent(s:OpenBraceLine(v:lnum))
+            return obind
         else
-            return indent(s:OpenBraceLine(v:lnum)) + &sw + 2
+            return obind + &sw + 2
         endif
     elseif pline =~ ';$' && pline !~ '[^:]\+:.*[=+]>.*'
-        return indent(pnum) - &sw
+        return ind - &sw
     endif
 
     " line after multi-line array or hash value (e.g. in variable assignment)
@@ -230,17 +231,16 @@ function! GetPuppetIndent()
 
     " closing square bracket of resource title array
     if line =~ '^\s*\]$'
-        return s:OpenBraceCol(v:lnum)
+        return obcol
     endif
 
     if line =~ '^\s*}$'
-        let obl = s:OpenBraceLine(v:lnum)
-        if getline(obl) =~ ':$'
+        if obline =~ ':$'
             " resource without multi-line title array
-            return indent(obl)
-        elseif getline(obl) =~ '^\s*[a-z0-9_:]\+ { \['
+            return obind
+        elseif obline =~ '^\s*[a-z0-9_:]\+ { \['
             " resource with multi-line title array
-            return indent(obl)
+            return obind
         endif
     endif
 
