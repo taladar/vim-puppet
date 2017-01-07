@@ -50,39 +50,43 @@ function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
         return 0
     endif
     let rline = getline(rlnum)
-    if rline =~ '^\s*} else {$'
+    if strcharpart(rline, rcol - 1, 1) == '{'
+      if rline =~ '^\s*} else {$'
+          return indent(rlnum)
+      endif
+      if rline =~ ': {'
+          return indent(rlnum)
+      endif
+      if rline =~ '| {$'
+        " start of body passed to higher order function
+        " look for function name line and base indent on that
+        let save_cursor = getcurpos()
+        call cursor(rlnum, rcol - 3)
+        let [slambdaline, slambacol] = searchpos(') |', 'bW')
+        let [openparline, openparcol] = searchpairpos('(', '', ')', 'nbW')
+        call setpos('.', save_cursor)
+        return indent(openparline)
+      endif
+      if rline =~ ') {$'
+        " end of parameter list or if/unless condition or case, look for start of
+        " parenthesis to base indent on that
+        let save_cursor = getcurpos()
+        call cursor(rlnum, rcol - 2)
+        let [rlnum2, rcol2] = searchpairpos('(', '', ')', 'nbW')
+        call setpos('.', save_cursor)
+        return indent(rlnum2)
+      endif
+      if rline =~ '^\s*case \$[a-z0-9:_]*\s*{'
         return indent(rlnum)
-    endif
-    if rline =~ ': {'
+      endif
+      if rline =~ '^\s*[a-z0-9:_]\+ {'
         return indent(rlnum)
+      endif
     endif
-    if rline =~ '| {$' && strcharpart(rline, rcol - 1, 1) == '{'
-      " start of body passed to higher order function
-      " look for function name line and base indent on that
-      let save_cursor = getcurpos()
-      call cursor(rlnum, rcol - 3)
-      let [slambdaline, slambacol] = searchpos(') |', 'bW')
-      let [openparline, openparcol] = searchpairpos('(', '', ')', 'nbW')
-      call setpos('.', save_cursor)
-      return indent(openparline)
-    endif
-    if rline =~ ') {$' && strcharpart(rline, rcol - 1, 1) == '{'
-      " end of parameter list or if/unless condition or case, look for start of
-      " parenthesis to base indent on that
-      let save_cursor = getcurpos()
-      call cursor(rlnum, rcol - 2)
-      let [rlnum2, rcol2] = searchpairpos('(', '', ')', 'nbW')
-      call setpos('.', save_cursor)
-      return indent(rlnum2)
-    endif
-    if rline =~ '^\s*case \$[a-z0-9:_]*\s*{'
-      return indent(rlnum)
-    endif
-    if rline =~ '^\s*[a-z0-9:_]\+ {' && strcharpart(rline, rcol - 1, 1) == '{'
-      return indent(rlnum)
-    endif
-    if rline =~ '^\s*\(function\|class\|define\) [a-z:_]*\s*($' && strcharpart(rline, rcol - 1, 1) == '('
-      return indent(rlnum)
+    if strcharpart(rline, rcol - 1, 1) == '('
+      if rline =~ '^\s*\(function\|class\|define\) [a-z:_]*\s*($'
+        return indent(rlnum)
+      endif
     endif
     return rcol - 1
 endfunction
@@ -110,13 +114,33 @@ function! GetPuppetIndent()
     let pline = getline(pnum)
     let ind = indent(pnum)
 
-    " Utrecht style leading commas
-    if line =~ '^\s*,' && s:OpenBraceChar(v:lnum) != '['
-        let ind = indent(s:OpenBraceLine(v:lnum)) + &sw
-    endif
-
     if pline =~ '^\s*case \$[a-z0-9:_]*\s*{'
         return indent(pnum)
+    endif
+
+    " Utrecht style leading commas
+    if line =~ '^\s*,'
+        if pline =~ '^\s*,' && s:OpenBraceLine(v:lnum) < pnum
+            return indent(pnum)
+        elseif pline =~ '^\s*}$' || pline =~ '^\s*\]$'
+            " nested hash or array end
+            let obl = s:OpenBraceLine(pnum)
+            if getline(obl) =~ '^\s*,'
+              return indent(obl)
+            else
+              return indent(obl) - 2
+            endif
+        elseif getline(s:OpenBraceLine(v:lnum)) =~ ':$'
+            return indent(s:OpenBraceLine(v:lnum)) + &sw
+        elseif getline(s:OpenBraceLine(v:lnum)) =~ '{ \[' && s:OpenBraceChar(v:lnum) == '{'
+            return indent(s:OpenBraceLine(v:lnum)) + &sw
+        elseif getline(s:OpenBraceLine(v:lnum)) =~ ') {$'
+            return indent(s:OpenBraceLine(v:lnum)) + &sw
+        elseif s:OpenBraceChar(v:lnum) == '('
+            return indent(s:OpenBraceLine(v:lnum)) + &sw
+        else
+            return s:OpenBraceCol(v:lnum)
+        endif
     endif
 
     " line after line closing an array or hash value but not in parameter list
@@ -124,8 +148,8 @@ function! GetPuppetIndent()
         let ind = indent(s:OpenBraceLine(pnum))
     endif
 
-    " Lines after lines with unclosed square brackets or curly braces
-    " should align to the open brace
+    " Lines starting with comma after lines with unclosed square brackets or
+    " curly braces should align to the open brace
     if line =~ '^\s*,' && (pline =~ '\[[^\]]*$' || pline =~ '{[^}]*$')
         let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum)
     endif

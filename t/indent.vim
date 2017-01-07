@@ -332,8 +332,11 @@ describe 'indentation on new line =>'
           Expect line('.') == 1
           Expect col('.') == 1
           execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => bar\<CR>, baz"
-          Expect GetPuppetIndent() == 2
           Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(2) == "      , 'baz'"
+          Expect getline(3) == "      ]:"
+          Expect getline(4) == "    foo => bar"
+          Expect GetPuppetIndent() == 2
           Expect getline(5) == '  , baz'
           Expect line('.') == 5
           Expect col('.') == 7
