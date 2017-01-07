@@ -11,6 +11,8 @@ function! puppet#align#Format()
     execute range . ':s/^\(\s*\),\(\s\+\)\(\S\)/\1, \3/'
     " join { after if line to end of if line
     execute range . ':s/^\(\s*\)if(\(.*\))\_\s*{$/\1if(\2) {/'
+    " exactly one space between ) and {
+    execute range . ':s/)\s*{/) {/'
     " TODO: add empty line between resources,...
     " TODO: trailing whitespace removal
 

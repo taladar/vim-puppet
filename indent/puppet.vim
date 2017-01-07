@@ -154,12 +154,21 @@ function! GetPuppetIndent()
         endif
     endif
 
-    " opening of a class, defined type or function
+    " opening of a class with parameter list, defined type or function
     if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*\(function\|class\|define\) [a-z_:]*\s*($'
         if line =~ '^\s*)'
           return indent(s:OpenBraceLine(v:lnum)) + &sw
         else
           return indent(s:OpenBraceLine(v:lnum)) + &sw + 2
+        endif
+    endif
+
+    " opening of a class without parameter list
+    if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*class [a-z_:]*\s*{$'
+        if line =~ '^\s*)'
+          return indent(s:OpenBraceLine(v:lnum))
+        else
+          return indent(s:OpenBraceLine(v:lnum)) + &sw
         endif
     endif
 

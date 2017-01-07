@@ -661,6 +661,17 @@ describe 'indentation on new line =>'
         Expect line('.') == 5
         Expect col('.') == 3
       end
+
+      it 'indents body by 2 spaces relative to starting line with keyword in class without parameter list'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iclass saltfoobar {\<CR> "
+        Expect getline(1) == "class saltfoobar {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(2) == '   '
+        Expect line('.') == 2
+        Expect col('.') == 3
+      end
     end
     context "closing curly brace =>"
       it 'indents closing body curly brace of empty body to column of starting keyword'
