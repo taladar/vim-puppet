@@ -14,7 +14,7 @@ function! puppet#align#Format()
     " join { after if line to end of if line
     execute range . ':s/^\(\s*\)if(\(.*\))\_\s*{$/\1if(\2) {/e'
     " join { after class line to end of class line
-    execute range . ':s/^\(\s*\)class\(.*\)\_\s*{$/\1class\2 {/e'
+    execute range . ':s/^\(\s*\)class\s*\(\S*\)\_\s*{$/\1class \2 {/e'
     " exactly one space between ) and {
     execute range . ':s/)\s*{/) {/e'
     " remove trailing whitespace

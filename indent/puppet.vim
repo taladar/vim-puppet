@@ -75,6 +75,8 @@ function! GetPuppetIndent()
     " TODO: indent of first line after resource title in semicolon limited
     " resources
     " TODO: indent of closing } with resource relationship after it
+    " TODO: indent of array concatenated to variable in variable assignment
+    " TODO: exclude quoted and commented parentheses,... from consideration
 
     if pline =~ '^\s*case \$[a-z0-9:_]*\s*{'
         return ind
