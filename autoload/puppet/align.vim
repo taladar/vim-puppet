@@ -15,6 +15,7 @@ function! puppet#align#Format()
     execute range . ':s/^\(\s*\)if(\(.*\))\_\s*{$/\1if(\2) {/e'
     " exactly one space between ) and {
     execute range . ':s/)\s*{/) {/e'
+    " TODO: fix { on its own line after class without parameters
     " TODO: add empty line between resources,...
     " TODO: trailing whitespace removal
     " TODO: break long single line hash or array into array with one element
