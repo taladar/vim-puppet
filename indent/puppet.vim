@@ -98,7 +98,11 @@ function! GetPuppetIndent()
 
     " opening of higher order function lambda body
     if getline(s:OpenBraceLine(v:lnum)) =~ '| {$'
-        return indent(s:OpenBraceLine(v:lnum)) + &sw
+        if line =~ '^\s*}$'
+            return indent(s:OpenBraceLine(v:lnum))
+        else
+            return indent(s:OpenBraceLine(v:lnum)) + &sw
+        endif
     endif
 
     " if, main case, class, defined type or function body
