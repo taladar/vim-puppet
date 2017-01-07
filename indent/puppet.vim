@@ -44,53 +44,6 @@ function! s:OpenBraceCol(lnum)
     return rcol - 1
 endfunction
 
-function! s:OpenBraceColOrIndentOfOpenBraceLine(lnum)
-    let [rlnum, rcol] = s:OpenBraceLineAndCol(a:lnum)
-    if rlnum == 0
-        return 0
-    endif
-    let rline = getline(rlnum)
-    if strcharpart(rline, rcol - 1, 1) == '{'
-      if rline =~ '^\s*} else {$'
-          return indent(rlnum)
-      endif
-      if rline =~ ': {'
-          return indent(rlnum)
-      endif
-      if rline =~ '| {$'
-        " start of body passed to higher order function
-        " look for function name line and base indent on that
-        let save_cursor = getcurpos()
-        call cursor(rlnum, rcol - 3)
-        let [slambdaline, slambacol] = searchpos(') |', 'bW')
-        let [openparline, openparcol] = searchpairpos('(', '', ')', 'nbW')
-        call setpos('.', save_cursor)
-        return indent(openparline)
-      endif
-      if rline =~ ') {$'
-        " end of parameter list or if/unless condition or case, look for start of
-        " parenthesis to base indent on that
-        let save_cursor = getcurpos()
-        call cursor(rlnum, rcol - 2)
-        let [rlnum2, rcol2] = searchpairpos('(', '', ')', 'nbW')
-        call setpos('.', save_cursor)
-        return indent(rlnum2)
-      endif
-      if rline =~ '^\s*case \$[a-z0-9:_]*\s*{'
-        return indent(rlnum)
-      endif
-      if rline =~ '^\s*[a-z0-9:_]\+ {'
-        return indent(rlnum)
-      endif
-    endif
-    if strcharpart(rline, rcol - 1, 1) == '('
-      if rline =~ '^\s*\(function\|class\|define\) [a-z:_]*\s*($'
-        return indent(rlnum)
-      endif
-    endif
-    return rcol - 1
-endfunction
-
 function! s:PrevNonBlankNonComment(lnum)
     let res = prevnonblank(a:lnum - 1)
     while getline(res) =~ '^\s*#'
@@ -143,105 +96,105 @@ function! GetPuppetIndent()
         endif
     endif
 
-    " line after line closing an array or hash value but not in parameter list
-    if pline =~ '^\s*\(\]\|}\)' && line !~ '^\s*,'
-        let ind = indent(s:OpenBraceLine(pnum))
+    " opening of higher order function lambda body
+    if getline(s:OpenBraceLine(v:lnum)) =~ '| {$'
+        return indent(s:OpenBraceLine(v:lnum)) + &sw
     endif
 
-    " Lines starting with comma after lines with unclosed square brackets or
-    " curly braces should align to the open brace
-    if line =~ '^\s*,' && (pline =~ '\[[^\]]*$' || pline =~ '{[^}]*$')
-        let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum)
+    " if, main case, class, defined type or function body
+    if getline(s:OpenBraceLine(v:lnum)) =~ ') {$'
+        if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*) {$'
+            " multi-line condition if or class/defined type/function parameter
+            " list
+            if line =~ '^\s*}$'
+                return indent(s:OpenBraceLine(s:OpenBraceLine(v:lnum)))
+            else
+                return indent(s:OpenBraceLine(s:OpenBraceLine(v:lnum))) + &sw
+            endif
+        elseif getline(s:OpenBraceLine(v:lnum)) =~ '^\s*if\>'
+            " single-line condition if
+            if line =~ '^\s*}$'
+                return indent(s:OpenBraceLine(v:lnum))
+            else
+                return indent(s:OpenBraceLine(v:lnum)) + &sw
+            endif
+        elseif getline(s:OpenBraceLine(v:lnum)) =~ '^\s*case\>'
+            " main case body is not indented
+            return indent(s:OpenBraceLine(v:lnum))
+        endif
     endif
 
     " multi-line condition
     if line =~ '^\s*\(&\||\)'
-        let ind = s:OpenBraceCol(v:lnum) + 1
+        return s:OpenBraceCol(v:lnum) + 1
     endif
 
     " body of else
     if pline =~ '^\s*} else {$'
-        let ind = indent(pnum) + &sw
-    endif
-
-    " opening { of if or case body
-    if pline =~ ') {$'
-        if pline =~ '^\s*) {$'
-          " multi-line condition if
-          let ind = indent(s:OpenBraceLine(v:lnum))
-        else
-          if pline =~ '^\s*if\>'
-            " single-line condition if
-            let ind = indent(s:OpenBraceLine(v:lnum)) + &sw
-          elseif pline =~ '^\s*case\>'
-            let ind = indent(s:OpenBraceLine(v:lnum))
-          endif
-        endif
-    endif
-
-    " opening of higher order function lambda body
-    if pline =~ '| {'
-        let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum) + &sw
-    endif
-
-    " opening of resource body
-    if pline =~ ':$'
-        let ind = indent(s:OpenBraceLine(v:lnum)) + &sw + 2
-    elseif pline =~ ';$' && pline !~ '[^:]\+:.*[=+]>.*'
-        let ind = indent(pnum) - &sw
-    endif
-
-    " Match } }, }; ] ]: ], ];
-    if line =~ '^\s*\(}\(,\|;\)\?$\|]:\|],\|}]\|];\?$\)'
-        let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum)
+        return indent(pnum) + &sw
     endif
 
     if line =~ '^\s*) {$'
         if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*\(function\|class\|define\)'
           " closing of parameter list of function, class of defined type
-          let ind = s:OpenBraceColOrIndentOfOpenBraceLine(v:lnum) + &sw
+          return indent(s:OpenBraceLine(v:lnum)) + &sw
         else
           " closing of multi-line if or unless condition
-          let ind = s:OpenBraceCol(v:lnum)
+          return s:OpenBraceCol(v:lnum)
         endif
     endif
 
-    " opening of a case body (the per case one, not the main one)
-    if pline =~ ': {$'
+    " case body (the per case one, not the main one)
+    if getline(s:OpenBraceLine(v:lnum)) =~ ': {$'
         if line =~ '^\s*}'
           " empty case body with immediate closing curly brace
-          let ind = indent(pnum)
+          return indent(s:OpenBraceLine(v:lnum))
         else
-          let ind = indent(pnum) + &sw
+          return indent(s:OpenBraceLine(v:lnum)) + &sw
         endif
     endif
 
     " opening of a class, defined type or function
-    if pline =~ '^\s*\(function\|class\|define\) [a-z_:]*\s*($'
+    if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*\(function\|class\|define\) [a-z_:]*\s*($'
         if line =~ '^\s*)'
-          let ind = indent(pnum) + &sw
+          return indent(s:OpenBraceLine(v:lnum)) + &sw
         else
-          let ind = indent(pnum) + &sw + 2
+          return indent(s:OpenBraceLine(v:lnum)) + &sw + 2
         endif
     endif
 
-    " Don't actually shift over for } else {
-    if line =~ '^\s*}\s*els\(e\|if\).*{\s*$'
-        let ind -= &sw
+    " opening of resource body
+    if pline =~ ':$'
+        if line =~ '^\s*}'
+            return indent(s:OpenBraceLine(v:lnum))
+        else
+            return indent(s:OpenBraceLine(v:lnum)) + &sw + 2
+        endif
+    elseif pline =~ ';$' && pline !~ '[^:]\+:.*[=+]>.*'
+        return indent(pnum) - &sw
     endif
 
-    " Don't indent resources that are one after another with a ->(ordering arrow)
-    " file {'somefile':
-    "    ...
-    " } ->
-    "
-    " package { 'mycoolpackage':
-    "    ...
-    " }
-    if line =~ '->$'
-        let ind -= &sw
+    " line after multi-line array or hash value (e.g. in variable assignment)
+    " optionally with + $foo after the ]
+    if pline =~ '^\s*\(}\|\]\)\([ $+a-z0-9_]\+\)\?$'
+        return indent(s:OpenBraceLine(pnum))
     endif
 
+    " closing square bracket of resource title array
+    if line =~ '^\s*\]$'
+        return s:OpenBraceCol(v:lnum)
+    endif
+
+    if line =~ '^\s*}$'
+        let obl = s:OpenBraceLine(v:lnum)
+        if getline(obl) =~ ':$'
+            " resource without multi-line title array
+            return indent(obl)
+        elseif getline(obl) =~ '^\s*[a-z0-9_:]\+ { \['
+            " resource with multi-line title array
+            return indent(obl)
+        endif
+    endif
 
     return ind
 endfunction
