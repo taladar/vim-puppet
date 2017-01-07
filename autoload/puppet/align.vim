@@ -4,7 +4,9 @@ endfunction
 
 " for use in formatexpr
 function! puppet#align#Format()
-    let range = printf('%d,%d', v:lnum, v:lnum + v:count - 1)
+    let startline = v:lnum
+    let linecount = v:count
+    let range = printf('%d,%d', startline, startline + linecount - 1)
     " add a single space after leading comma without one
     execute range . ':s/^\(\s*\),\(\S\)/\1, \2/e'
     " condense multiple spaces after leading comma into one
@@ -18,19 +20,22 @@ function! puppet#align#Format()
     " TODO: break long single line hash or array into array with one element
     "       per line
 
-    call cursor(v:lnum, 1)
+    call cursor(startline, 1)
+    execute 'normal! ' . printf('%d', linecount) . 'V='
+
+    call cursor(startline, 1)
 
     " this could be done more efficiently, this way we re-align once per arrow
-    let arrowpos = searchpos('=>', 'W', v:lnum + v:count)
-    while arrowpos[0] != 0 || arrowpos[1] != 0
-      call cursor(arrowpos[0], 99999)
+    let arrowpos = searchpos('=>', 'W', startline + linecount)
+    while arrowpos[0] > 0 || arrowpos[1] > 0
+      call cursor(arrowpos[0], arrowpos[1])
       call puppet#align#AlignArrows()
 
-      let arrowpos = searchpos('=>', 'W', v:lnum + v:count)
+      let arrowpos = searchpos('=>', 'W', startline + linecount)
     endwhile
 
-    call cursor(v:lnum, 1)
-    execute 'normal! ' . printf('%d', v:count) . 'V='
+    call cursor(startline, 1)
+    execute 'normal! ' . printf('%d', linecount) . 'V='
 endfunction
 
 " finds all the arrows for alignment, i.e. those within the same {} block

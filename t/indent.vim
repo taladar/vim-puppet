@@ -446,9 +446,9 @@ describe 'indentation on new line =>'
         it 'indents body by 2 spaces after hitting return'
           Expect line('.') == 1
           Expect col('.') == 1
-          execute "normal iif(   foo == bar\<CR>&& baz == quux\<CR>) {\<CR> "
-          Expect getline(1) == "if(   foo == bar"
-          Expect getline(2) == "   && baz == quux"
+          execute "normal iif(    foo == bar\<CR>and baz == quux\<CR>) {\<CR> "
+          Expect getline(1) == "if(    foo == bar"
+          Expect getline(2) == "   and baz == quux"
           Expect getline(3) == '  ) {'
           Expect GetPuppetIndent() == 2
           Expect getline(4) == '   '
@@ -459,9 +459,9 @@ describe 'indentation on new line =>'
         it 'indents body by 2 spaces after o on condition line'
           Expect line('.') == 1
           Expect col('.') == 1
-          execute "normal iif(   foo == bar\<CR>&& baz == quux\<CR>) {\<ESC>o "
-          Expect getline(1) == "if(   foo == bar"
-          Expect getline(2) == "   && baz == quux"
+          execute "normal iif(    foo == bar\<CR>and baz == quux\<CR>) {\<ESC>o "
+          Expect getline(1) == "if(    foo == bar"
+          Expect getline(2) == "   and baz == quux"
           Expect getline(3) == '  ) {'
           Expect GetPuppetIndent() == 2
           Expect getline(4) == '   '

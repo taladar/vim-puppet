@@ -11,7 +11,7 @@ let b:did_indent = 1
 
 setlocal autoindent smartindent
 setlocal indentexpr=GetPuppetIndent()
-setlocal indentkeys+=0],0),0&,0\|,0(,{,0\,
+setlocal indentkeys+=0],0),0=and,0=or,0(,{,0\,
 
 if exists("*GetPuppetIndent")
     finish
@@ -125,7 +125,7 @@ function! GetPuppetIndent()
     endif
 
     " multi-line condition
-    if line =~ '^\s*\(&\||\)'
+    if line =~ '^\s*\(and\|or\)\>'
         return s:OpenBraceCol(v:lnum) + 1
     endif
 
