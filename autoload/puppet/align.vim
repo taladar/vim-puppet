@@ -25,12 +25,12 @@ function! puppet#align#Format()
 
     call cursor(startline, 1)
 
-    " this could be done more efficiently, this way we re-align once per arrow
     let arrowpos = searchpos('=>', 'W', startline + linecount)
     while arrowpos[0] > 0 || arrowpos[1] > 0
       call cursor(arrowpos[0], arrowpos[1])
       call puppet#align#AlignArrows()
 
+      search('[{}]', 'W')
       let arrowpos = searchpos('=>', 'W', startline + linecount)
     endwhile
 
@@ -46,13 +46,13 @@ function! puppet#align#FindArrows()
     let save_cursor = getcurpos()
     let result = []
 
-    let [slnum, scol] = searchpairpos('{', '', '}', 'nbW')
-    let [elnum, ecol] = searchpairpos('{', '', '}', 'nW')
+    let [slnum, scol] = searchpairpos('{', ';$', '}', 'nbW')
+    let [elnum, ecol] = searchpairpos('{', ';$', '}', 'nW')
     call cursor(slnum, scol)
     let prevarrowlnum = - 1
     let [arrowlnum, arrowcol] = searchpos('=>', 'W')
     while  arrowlnum >= 1 && arrowcol >= 1 && ((elnum <= 0 || arrowlnum < elnum) || (elnum <= 0 || ecol <= 0 || (arrowlnum == elnum && arrowcol < ecol)))
-      let [arrowopencurlylnum, arrowopencurlycol] = searchpairpos('{', '', '}', 'nbW')
+      let [arrowopencurlylnum, arrowopencurlycol] = searchpairpos('{', ';$', '}', 'nbW')
       if arrowopencurlylnum != slnum || arrowopencurlycol != scol
         " we are in a nested hash
         let prevarrowlnum = arrowlnum
