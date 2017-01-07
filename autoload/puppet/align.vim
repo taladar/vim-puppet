@@ -19,6 +19,7 @@ function! puppet#align#Format()
     execute range . ':s/)\s*{/) {/e'
     " remove trailing whitespace
     execute range . ':s/\s*$//e'
+    " TODO: fix resources with newline after open {
     " TODO: add empty line between resources,...
     " TODO: break long single line hash or array into array with one element
     "       per line

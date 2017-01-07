@@ -72,8 +72,6 @@ function! GetPuppetIndent()
     let obcol = s:OpenBraceCol(v:lnum)
     let obind = indent(oblnum)
 
-    " TODO: indent of first line after resource title in semicolon limited
-    " resources
     " TODO: indent of closing } with resource relationship after it
     " TODO: indent of array concatenated to variable in variable assignment
     " TODO: exclude quoted and commented parentheses,... from consideration
