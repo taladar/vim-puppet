@@ -886,7 +886,6 @@ describe 'indentation on new line =>'
         Expect col('.') == 1
         execute "normal iif($foo) {\<CR>{ 'hello' => 'world', 'bar' => 'baz' }\<CR>}"
         Expect getline(1) == "if($foo) {"
-        Expect GetPuppetIndent() == 2
         Expect getline(2) == "  { 'hello' => 'world', 'bar' => 'baz' }"
         Expect getline(3) == "}"
         Expect line('.') == 3
