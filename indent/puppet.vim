@@ -75,8 +75,6 @@ function! GetPuppetIndent()
     " TODO: indent of first line after resource title in semicolon limited
     " resources
     " TODO: indent of closing } with resource relationship after it
-    " TODO: indent of , in multi line parameter list of function call
-    " TODO: indent of lines after multi line parameter list of function call
 
     if pline =~ '^\s*case \$[a-z0-9:_]*\s*{'
         return ind
@@ -101,7 +99,11 @@ function! GetPuppetIndent()
         elseif obline =~ ') {$'
             return obind + &sw
         elseif s:OpenBraceChar(v:lnum) == '('
-            return obind + &sw
+            if obline =~ '^\s*\(class\|function\|define\)'
+                return obind + &sw
+            else
+                return obcol
+            endif
         else
             return obcol
         endif
