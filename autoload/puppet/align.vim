@@ -20,6 +20,8 @@ function! puppet#align#Format()
     " TODO: trailing whitespace removal
     " TODO: break long single line hash or array into array with one element
     "       per line
+    " TODO: single-line hashes as values in multi-line hash as value in
+    "       resource
 
     call cursor(startline, 1)
     execute 'normal! ' . printf('%d', linecount) . 'V='
