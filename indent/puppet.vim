@@ -70,7 +70,6 @@ function! GetPuppetIndent()
     " TODO: indent of first line after resource title in semicolon limited
     " resources
     " TODO: indent of if body with no parentheses around condition
-    " TODO: indent of } else { and closing } of else body
     " TODO: replace all the OpenBraceLine calls with variable
     " TODO: indent of closing } with resource relationship after it
 
@@ -126,6 +125,8 @@ function! GetPuppetIndent()
             " single-line condition if
             if line =~ '^\s*}$'
                 return indent(s:OpenBraceLine(v:lnum))
+            elseif line =~ '^\s*} else {$'
+                return indent(s:OpenBraceLine(v:lnum))
             else
                 return indent(s:OpenBraceLine(v:lnum)) + &sw
             endif
@@ -135,14 +136,13 @@ function! GetPuppetIndent()
         endif
     endif
 
-    " multi-line condition
-    if line =~ '^\s*\(and\|or\)\>'
-        return s:OpenBraceCol(v:lnum) + 1
-    endif
-
     " body of else
-    if pline =~ '^\s*} else {$'
-        return indent(pnum) + &sw
+    if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*} else {$'
+        if line =~ '^\s*}$'
+            return indent(s:OpenBraceLine(v:lnum))
+        else
+            return indent(s:OpenBraceLine(v:lnum)) + &sw
+        endif
     endif
 
     if line =~ '^\s*) {$'
@@ -166,6 +166,14 @@ function! GetPuppetIndent()
     endif
 
     " opening of a class with parameter list, defined type or function
+        endif
+    endif
+
+    " multi-line condition
+    if line =~ '^\s*\(and\|or\)\>'
+        return s:OpenBraceCol(v:lnum) + 1
+    endif
+
     if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*\(function\|class\|define\) [a-z_:]*\s*($'
         if line =~ '^\s*)'
           return indent(s:OpenBraceLine(v:lnum)) + &sw
