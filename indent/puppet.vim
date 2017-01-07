@@ -74,7 +74,6 @@ function! GetPuppetIndent()
 
     " TODO: indent of first line after resource title in semicolon limited
     " resources
-    " TODO: indent of if body with no parentheses around condition
     " TODO: indent of closing } with resource relationship after it
     " TODO: indent of , in multi line parameter list of function call
     " TODO: indent of lines after multi line parameter list of function call

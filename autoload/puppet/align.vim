@@ -13,11 +13,13 @@ function! puppet#align#Format()
     execute range . ':s/^\(\s*\),\(\s\+\)\(\S\)/\1, \3/e'
     " join { after if line to end of if line
     execute range . ':s/^\(\s*\)if(\(.*\))\_\s*{$/\1if(\2) {/e'
+    " join { after class line to end of class line
+    execute range . ':s/^\(\s*\)class\(.*\)\_\s*{$/\1class\2 {/e'
     " exactly one space between ) and {
     execute range . ':s/)\s*{/) {/e'
-    " TODO: fix { on its own line after class without parameters
+    " remove trailing whitespace
+    execute range . ':s/\s*$//e'
     " TODO: add empty line between resources,...
-    " TODO: trailing whitespace removal
     " TODO: break long single line hash or array into array with one element
     "       per line
     " TODO: single-line hashes as values in multi-line hash as value in
