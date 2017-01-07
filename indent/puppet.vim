@@ -67,6 +67,9 @@ function! GetPuppetIndent()
     let pline = getline(pnum)
     let ind = indent(pnum)
 
+    " TODO: indent of first line after resource title in semicolon limited
+    " resources
+
     if pline =~ '^\s*case \$[a-z0-9:_]*\s*{'
         return indent(pnum)
     endif
