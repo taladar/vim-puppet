@@ -70,7 +70,7 @@ function! GetPuppetIndent()
     " TODO: indent of first line after resource title in semicolon limited
     " resources
     " TODO: indent of if body with no parentheses around condition
-    " TODO: insert of } else { and closing } of else body
+    " TODO: indent of } else { and closing } of else body
     " TODO: replace all the OpenBraceLine calls with variable
     " TODO: indent of closing } with resource relationship after it
 
