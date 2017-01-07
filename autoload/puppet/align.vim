@@ -11,6 +11,8 @@ function! puppet#align#Format()
     execute range . ':s/^\(\s*\),\(\S\)/\1, \2/e'
     " condense multiple spaces after leading comma into one
     execute range . ':s/^\(\s*\),\(\s\+\)\(\S\)/\1, \3/e'
+    " remove space between if and (
+    execute range . ':s/^\(\s*\)if\s*(/\1if(/e'
     " join { after if line to end of if line
     execute range . ':s/^\(\s*\)if(\(.*\))\_\s*{$/\1if(\2) {/e'
     " join { after class line to end of class line
