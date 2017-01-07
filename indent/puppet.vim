@@ -72,6 +72,8 @@ function! GetPuppetIndent()
     " TODO: indent of if body with no parentheses around condition
     " TODO: replace all the OpenBraceLine calls with variable
     " TODO: indent of closing } with resource relationship after it
+    " TODO: indent of , in multi line parameter list of function call
+    " TODO: indent of lines after multi line parameter list of function call
 
     if pline =~ '^\s*case \$[a-z0-9:_]*\s*{'
         return indent(pnum)
@@ -133,6 +135,15 @@ function! GetPuppetIndent()
         elseif getline(s:OpenBraceLine(v:lnum)) =~ '^\s*case\>'
             " main case body is not indented
             return indent(s:OpenBraceLine(v:lnum))
+        endif
+    endif
+
+    " if without condition
+    if getline(s:OpenBraceLine(v:lnum)) =~ '^\s*if.*{$'
+        if line =~ '^\s*}'
+            return indent(s:OpenBraceLine(v:lnum))
+        else
+            return indent(s:OpenBraceLine(v:lnum)) + &sw
         endif
     endif
 
