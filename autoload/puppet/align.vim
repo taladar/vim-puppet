@@ -6,15 +6,17 @@ endfunction
 function! puppet#align#Format()
     let range = printf('%d,%d', v:lnum, v:lnum + v:count - 1)
     " add a single space after leading comma without one
-    execute range . ':s/^\(\s*\),\(\S\)/\1, \2/'
+    execute range . ':s/^\(\s*\),\(\S\)/\1, \2/e'
     " condense multiple spaces after leading comma into one
-    execute range . ':s/^\(\s*\),\(\s\+\)\(\S\)/\1, \3/'
+    execute range . ':s/^\(\s*\),\(\s\+\)\(\S\)/\1, \3/e'
     " join { after if line to end of if line
-    execute range . ':s/^\(\s*\)if(\(.*\))\_\s*{$/\1if(\2) {/'
+    execute range . ':s/^\(\s*\)if(\(.*\))\_\s*{$/\1if(\2) {/e'
     " exactly one space between ) and {
-    execute range . ':s/)\s*{/) {/'
+    execute range . ':s/)\s*{/) {/e'
     " TODO: add empty line between resources,...
     " TODO: trailing whitespace removal
+    " TODO: break long single line hash or array into array with one element
+    "       per line
 
     call cursor(v:lnum, 1)
 
