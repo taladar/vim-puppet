@@ -213,6 +213,20 @@ describe 'indentation on new line =>'
           Expect col('.') == 1
         end
 
+        it 'unindents the closing curly brace in a single parameter resource with multi-line hash value'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<CR>hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    hello => { 'wo'  => 'rld'"
+          Expect getline(3) == "             , 'hel' => 'lo'"
+          Expect getline(4) == "             }"
+          Expect getline(5) == '}'
+          Expect line('.') == 5
+          Expect col('.') == 1
+        end
+
         it 'unindents the closing curly brace in a two parameter resource'
           Expect line('.') == 1
           Expect col('.') == 1

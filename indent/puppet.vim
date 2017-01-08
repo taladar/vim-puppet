@@ -227,7 +227,11 @@ function! GetPuppetIndent()
     " line after multi-line array or hash value (e.g. in variable assignment)
     " optionally with + $foo after the ]
     if pline =~ '^\s*\(}\|\]\)\([ $+a-z0-9_]\+\)\?$'
-        return indent(s:OpenBraceLine(pnum))
+        if line =~ '^\s*}$'
+            return obind
+        else
+            return indent(s:OpenBraceLine(pnum))
+        endif
     endif
 
     " closing square bracket of resource title array
