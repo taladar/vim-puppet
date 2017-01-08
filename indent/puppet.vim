@@ -89,9 +89,16 @@ function! GetPuppetIndent()
         endif
     endif
 
+    if line =~ '^\s*}$' && (obline =~ '=> {' || obline =~ '=> \[')
+        return obcol
+    endif
+
     " Utrecht style leading commas
     if line =~ '^\s*,'
-        if pline =~ '^\s*,' && oblnum < pnum
+        if v:lnum > oblnum && obline =~ "=>"
+            " indicates we have a nested array or hash
+            return obcol
+        elseif pline =~ '^\s*,' && oblnum < pnum
             return ind
         elseif pline =~ '^\s*}$' || pline =~ '^\s*\]$'
             " nested hash or array end

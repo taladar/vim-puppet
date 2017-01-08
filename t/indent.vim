@@ -974,6 +974,41 @@ describe "alignment of arrow =>"
       Expect getline(6) == "}"
     end
 
+    it 'aligns arrows correctly if second of two parameters is the same length as the first and both have multi line nested hash values'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>, world => { 'foo' => 'bar'\<CR>, 'quux' => 'baz'\<CR>\}\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [5,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,3], [5,11,3]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => { 'wo'  => 'rld'"
+      Expect getline(3) == "             , 'hel' => 'lo'"
+      Expect getline(4) == "             }"
+      Expect getline(5) == "  , world => { 'foo'  => 'bar'"
+      Expect getline(6) == "             , 'quux' => 'baz'"
+      Expect getline(7) == "             }"
+      Expect getline(8) == "}"
+    end
+
+    it 'aligns arrows correctly if single parameter hash value has two keys of the same length and both have multi line nested hash values'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>multi => { hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>, world => { 'foo' => 'bar'\<CR>, 'quux' => 'baz'\<CR>\}\<CR>}\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,7]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    multi => { hello => { 'wo'  => 'rld'"
+      Expect getline(3) == "                        , 'hel' => 'lo'"
+      Expect getline(4) == "                        }"
+      Expect getline(5) == "             , world => { 'foo'  => 'bar'"
+      Expect getline(6) == "                        , 'quux' => 'baz'"
+      Expect getline(7) == "                        }"
+      Expect getline(8) == "             }"
+      Expect getline(9) == "}"
+    end
+
     it 'aligns arrows correctly if second of two parameters is two chars longer than the first and first has multi line nested hash value'
       Expect line('.') == 1
       Expect col('.') == 1
