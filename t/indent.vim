@@ -925,6 +925,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>}"
       Expect puppet#align#FindArrows() == [[2,11], [3,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,1], [3,11,1]]
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello => world"
       Expect getline(3) == "  , world => hello"
@@ -936,6 +937,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => { 'wo' => 'rld' }\<CR>, world => hello\<CR>}"
       Expect puppet#align#FindArrows() == [[2,11], [3,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,1], [3,11,1]]
       Expect puppet#align#FindAlignColumn() == 11
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello => { 'wo' => 'rld' }"
@@ -943,11 +945,42 @@ describe "alignment of arrow =>"
       Expect getline(4) == "}"
     end
 
+    it 'aligns arrows correctly if second of two parameters is the same length as the first and first has multi line nested hash value'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>, world => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [5,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,3], [5,11,1]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => { 'wo'  => 'rld'"
+      Expect getline(3) == "             , 'hel' => 'lo'"
+      Expect getline(4) == "             }"
+      Expect getline(5) == "  , world => hello"
+      Expect getline(6) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is two chars longer than the first and first has multi line nested hash value'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>, worldly => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,13], [5,13]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,13,3], [5,13,1]]
+      Expect puppet#align#FindAlignColumn() == 13
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello   => { 'wo'  => 'rld'"
+      Expect getline(3) == "               , 'hel' => 'lo'"
+      Expect getline(4) == "               }"
+      Expect getline(5) == "  , worldly => hello"
+      Expect getline(6) == "}"
+    end
+
     it 'aligns arrows correctly if second of two parameters is one char longer than the first'
       Expect line('.') == 1
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worlds => hello\<CR>}"
       Expect puppet#align#FindArrows() == [[2,12], [3,12]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,12,1], [3,12,1]]
       Expect puppet#align#FindAlignColumn() == 12
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello  => world"
@@ -960,6 +993,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldly => hello\<CR>}"
       Expect puppet#align#FindArrows() == [[2,13], [3,13]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,13,1], [3,13,1]]
       Expect puppet#align#FindAlignColumn() == 13
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello   => world"
@@ -972,6 +1006,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>, hollo => world\<CR>}"
       Expect puppet#align#FindArrows() == [[2,11], [3,11], [4,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,1], [3,11,1], [4,11,1]]
       Expect puppet#align#FindAlignColumn() == 11
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello => world"
@@ -985,6 +1020,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>, hollow => world\<CR>}"
       Expect puppet#align#FindArrows() == [[2,12], [3,12], [4,12]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,12,1], [3,12,1], [4,12,1]]
       Expect puppet#align#FindAlignColumn() == 12
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello  => world"
@@ -998,6 +1034,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>, hell => world\<CR>}"
       Expect puppet#align#FindArrows() == [[2,11], [3,11], [4,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,1], [3,11,1], [4,11,1]]
       Expect puppet#align#FindAlignColumn() == 11
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello => world"
@@ -1011,6 +1048,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worlds => hello\<CR>, hollo => world\<CR>}"
       Expect puppet#align#FindArrows() == [[2,12], [3,12], [4,12]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,12,1], [3,12,1], [4,12,1]]
       Expect puppet#align#FindAlignColumn() == 12
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello  => world"
@@ -1024,6 +1062,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldly => hello\<CR>, hollo => world\<CR>}"
       Expect puppet#align#FindArrows() == [[2,13], [3,13], [4,13]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,13,1], [3,13,1], [4,13,1]]
       Expect puppet#align#FindAlignColumn() == 13
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello   => world"
@@ -1037,6 +1076,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlie => hello\<CR>, hollo => world\<CR>}"
       Expect puppet#align#FindArrows() == [[2,14], [3,14], [4,14]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,14,1], [3,14,1], [4,14,1]]
       Expect puppet#align#FindAlignColumn() == 14
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello    => world"
@@ -1050,6 +1090,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollo => world\<CR>}"
       Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,15,1], [3,15,1], [4,15,1]]
       Expect puppet#align#FindAlignColumn() == 15
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello     => world"
@@ -1063,6 +1104,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollowman => world\<CR>}"
       Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,15,1], [3,15,1], [4,15,1]]
       Expect puppet#align#FindAlignColumn() == 15
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello     => world"
@@ -1076,6 +1118,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollowman => world\<CR>, workhorse => horsework\<CR>}"
       Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15], [5,15]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,15,1], [3,15,1], [4,15,1], [5,15,1]]
       Expect puppet#align#FindAlignColumn() == 15
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello     => world"
@@ -1090,6 +1133,7 @@ describe "alignment of arrow =>"
       Expect col('.') == 1
       execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollowman => world\<CR>, hoarser => horse\<CR>}"
       Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15], [5,15]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,15,1], [3,15,1], [4,15,1], [5,15,1]]
       Expect puppet#align#FindAlignColumn() == 15
       Expect getline(1) == "foo { 'bla':"
       Expect getline(2) == "    hello     => world"

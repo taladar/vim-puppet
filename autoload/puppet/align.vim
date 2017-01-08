@@ -32,8 +32,6 @@ function! puppet#align#Format()
     " TODO: add empty line between resources,...
     " TODO: break long single line hash or array into array with one element
     "       per line
-    " TODO: single-line hashes as values in multi-line hash as value in
-    "       resource
 
     call cursor(startline, 1)
     execute 'normal! ' . printf('%d', linecount) . 'V='
@@ -91,6 +89,33 @@ function! puppet#align#FindArrows()
     return result
 endfunction
 
+function! puppet#align#FindArrowsWithLineCounts()
+    let [elnum, ecol] = searchpairpos('{', ';$', '}', 'nW')
+    if elnum == 0 && ecol == 0
+        let [elbuf, elnum, ecol, eloff] = getpos('$')
+    endif
+
+    let arrows = puppet#align#FindArrows()
+
+    let arrowswithlinecounts = []
+    for [arrowlnum, arrowcol] in arrows
+        let added = 0
+        for [nextarrowlnum, nextarrowcol] in arrows[1:-1]
+            if nextarrowlnum < arrowlnum  || (nextarrowlnum == arrowlnum && nextarrowcol <= arrowcol)
+                continue
+            endif
+            let added = added + 1
+            call add(arrowswithlinecounts, [arrowlnum, arrowcol, (nextarrowlnum - arrowlnum)])
+            break
+        endfor
+        if added == 0
+            call add(arrowswithlinecounts, [arrowlnum, arrowcol, elnum - arrowlnum])
+        endif
+    endfor
+
+    return arrowswithlinecounts
+endfunction
+
 " Finds the column where the aligned arrows need to start
 function! puppet#align#FindAlignColumn()
     let save_cursor = getcurpos()
@@ -111,17 +136,17 @@ endfunction
 " for this to work the cursor needs to be within the same curly braces or
 " parentheses as the arrows to align
 function! puppet#align#AlignArrows()
-    let [ save_buf, save_lnum, save_col, save_off, save_curs_want ]  = getcurpos()
+    let save_cursor  = getcurpos()
 
-    let [slnum, scol] = searchpairpos('\({\|(\)', '', '\(}\|)\)', 'nbW')
+    let [slnum, scol] = searchpairpos('\({\|(\)', ';$', '\(}\|)\)', 'nbW')
     if slnum == 0 && scol == 0
         return
     endif
 
-    let arrows = puppet#align#FindArrows()
+    let arrowswithlinecounts = puppet#align#FindArrowsWithLineCounts()
     let aligncol = puppet#align#FindAlignColumn()
 
-    for [arrowlnum, arrowcol] in arrows
+    for [arrowlnum, arrowcol,linecount] in arrowswithlinecounts
       call cursor(arrowlnum, arrowcol)
       if arrowcol == aligncol
         continue
@@ -131,7 +156,17 @@ function! puppet#align#AlignArrows()
       else
         execute "normal! " . (aligncol - arrowcol) . "i \<ESC>"
       endif
+      let c = 1
+      while c < linecount
+          call cursor(arrowlnum + c, 1)
+          if arrowcol > aligncol
+            execute "normal! " . (arrowcol - aligncol) . "x"
+          else
+            execute "normal! " . (aligncol - arrowcol) . "i \<ESC>"
+          endif
+          let c = c + 1
+      endwhile
     endfor
 
-    call setpos('.', [save_buf, save_lnum, save_col, save_off, save_curs_want])
+    call setpos('.', save_cursor)
 endfunction
