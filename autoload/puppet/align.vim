@@ -6,7 +6,9 @@ endfunction
 function! puppet#align#Format()
     let startline = v:lnum
     let linecount = v:count
-    let range = printf('%d,%d', startline, startline + linecount - 1)
+    let lastline = startline + linecount - 1
+    let linesafter = line('$') - lastline
+    let range = printf('%d,%d', startline, lastline)
     " add a single space after leading comma without one
     execute range . ':s/^\(\s*\),\(\S\)/\1, \2/e'
     " condense multiple spaces after leading comma into one
@@ -15,13 +17,18 @@ function! puppet#align#Format()
     execute range . ':s/^\(\s*\)if\s*(/\1if(/e'
     " join { after if line to end of if line
     execute range . ':s/^\(\s*\)if(\(.*\))\_\s*{$/\1if(\2) {/e'
+    let lastline = line('$') - linesafter
+    let range = printf('%d,%d', startline, lastline)
     " join { after class line to end of class line
     execute range . ':s/^\(\s*\)class\s*\(\S*\)\_\s*{$/\1class \2 {/e'
+    let lastline = line('$') - linesafter
+    let range = printf('%d,%d', startline, lastline)
     " exactly one space between ) and {
     execute range . ':s/)\s*{/) {/e'
     " remove trailing whitespace
     execute range . ':s/\s*$//e'
-    " TODO: fix resources with newline after open {
+    " resources with newline after {
+    execute range . ':s/^\(\s*[a-z0-9_:]*[a-z0-9_]\) {\_\s*/\1 { /e'
     " TODO: add empty line between resources,...
     " TODO: break long single line hash or array into array with one element
     "       per line
