@@ -93,6 +93,11 @@ function! GetPuppetIndent()
         return obcol
     endif
 
+    " body of higher order function with multi-line array parameter, e.g. each
+    if obline =~ '\]) |.*| {'
+        return indent(s:OpenBraceLine(oblnum)) + &sw
+    endif
+
     " Utrecht style leading commas
     if line =~ '^\s*,'
         if v:lnum > oblnum && obline =~ "=>"

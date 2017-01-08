@@ -846,6 +846,19 @@ describe 'indentation on new line =>'
         Expect line('.') == 2
         Expect col('.') == 3
       end
+
+      it 'indents body by two spaces relative to function identifier line if function parameters are spread over multiple lines'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal ieach([ 'foo'\<CR>, 'bar'\<CR>]) |$bar| {\<CR> "
+        Expect getline(1) == "each([ 'foo'"
+        Expect getline(2) == "     , 'bar'"
+        Expect getline(3) == "     ]) |$bar| {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(4) == '   '
+        Expect line('.') == 4
+        Expect col('.') == 3
+      end
     end
   end
 
