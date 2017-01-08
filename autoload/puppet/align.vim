@@ -29,6 +29,9 @@ function! puppet#align#Format()
     execute range . ':s/\s*$//e'
     " resources with newline after {
     execute range . ':s/^\(\s*[a-z0-9_:]*[a-z0-9_]\) {\_\s*/\1 { /e'
+    " array concatenations with + at the end of the line, move + to start of
+    " line
+    execute range . ':s/\s*+\n\( *\)/\1+ /e'
     " TODO: add empty line between resources,...
     " TODO: break long single line hash or array into array with one element
     "       per line

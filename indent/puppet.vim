@@ -73,11 +73,20 @@ function! GetPuppetIndent()
     let obind = indent(oblnum)
 
     " TODO: indent of closing } with resource relationship after it
-    " TODO: indent of array concatenated to variable in variable assignment
     " TODO: exclude quoted and commented parentheses,... from consideration
 
     if pline =~ '^\s*case \$[a-z0-9:_]*\s*{'
         return ind
+    endif
+
+    " arrays concatenated in variable assignment
+    if line =~ '^\s*+'
+        let [equallnum, equalcol] = searchpos('=', 'nbW')
+        if equalcol < 1
+            return ind
+        else
+            return equalcol - 1
+        endif
     endif
 
     " Utrecht style leading commas
