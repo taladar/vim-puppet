@@ -6,3 +6,4 @@ setl keywordprg=puppet\ describe\ --providers
 setl iskeyword=-,:,@,48-57,_,192-255
 setl cms=#\ %s
 setl formatexpr=puppet#align#Format()
+setl commentstring=# %s
