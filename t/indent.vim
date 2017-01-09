@@ -18,7 +18,7 @@ if has('vim_starting')
   " set runtimepath+=/home/taladar/.vim/bundle/vim-closer
 endif
 
-describe 'indentation on new line'
+describe 'indentation on new line =>'
 
   before
     new
@@ -32,128 +32,1177 @@ describe 'indentation on new line'
     close!
   end
 
-  it 'starts on column 1 on first line'
-    Expect line('.') == 1
-    Expect col('.') == 1
+  context "basics =>"
+    it 'starts on column 1 on first line'
+      Expect line('.') == 1
+      Expect col('.') == 1
+    end
+
+    it 'moves to line 2, column 1 on return on line 1 column 1'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal i\<CR>"
+      Expect GetPuppetIndent() == 0
+      Expect line('.') == 2
+      Expect col('.') == 1
+    end
   end
 
-  it 'moves to line 2, column 1 on return on line 1 column 1'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal i\<CR>"
-    Expect GetPuppetIndent() == 0
-    Expect line('.') == 2
-    Expect col('.') == 1
+  context "resources =>"
+    context "with title string =>"
+      context "first parameter =>"
+        it 'indents by 4 spaces on return after a resource start'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<CR> "
+          Expect GetPuppetIndent() == 4
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == '     '
+          Expect line('.') == 2
+          Expect col('.') == 5
+        end
+
+        it 'indents by 4 spaces on o on resource start line'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>o "
+          Expect GetPuppetIndent() == 4
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == '     '
+          Expect line('.') == 2
+          Expect col('.') == 5
+        end
+
+        it 'indents comma in array parameter value on first parameter to open square bracket column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>ofoo => [ 'hello'\<CR>,"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    foo => [ 'hello'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(3) == '           ,'
+          Expect line('.') == 3
+          Expect col('.') == 12
+        end
+
+        it 'indents closing square bracket in array parameter value on first parameter to open square bracket column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>ofoo => [ 'hello'\<CR>, 'world'\<CR>]"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    foo => [ 'hello'"
+          Expect getline(3) == "           , 'world'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(4) == "           ]"
+          Expect line('.') == 4
+          Expect col('.') == 12
+        end
+
+        it 'indents comma in hash parameter value on first parameter to open curly brace column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>ofoo => { 'hello' => 'world'\<CR>,"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    foo => { 'hello' => 'world'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(3) == '           ,'
+          Expect line('.') == 3
+          Expect col('.') == 12
+        end
+
+        it 'indents comma in hash parameter value on first parameter to open curly brace column after filling in the value arrow on the line'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>ofoo => { 'hello' => 'world'\<CR>, 'foo' => $bar"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    foo => { 'hello' => 'world'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(3) == "           , 'foo'   => $bar"
+          Expect line('.') == 3
+          Expect col('.') == 28
+        end
+
+        it 'indents closing curly brace in hash parameter value on first parameter to opening curly brace column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>ofoo => { 'hello' => 'world'\<CR>, 'foo' => $bar\<CR>}"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    foo => { 'hello' => 'world'"
+          Expect getline(3) == "           , 'foo'   => $bar"
+          Expect GetPuppetIndent() == 11
+          Expect getline(4) == "           }"
+          Expect line('.') == 4
+          Expect col('.') == 12
+        end
+
+        it 'indents second parameter line after hash parameter value on first parameter to correct column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>ofoo => { 'hello' => 'world'\<CR>, 'foo' => $bar\<CR>}\<CR>,"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    foo => { 'hello' => 'world'"
+          Expect getline(3) == "           , 'foo'   => $bar"
+          Expect getline(4) == "           }"
+          Expect GetPuppetIndent() == 2
+          Expect getline(5) == "  ,"
+          Expect line('.') == 5
+          Expect col('.') == 3
+        end
+      end
+
+      context "further parameters =>"
+        it 'indents comma by 2 spaces on return after initial parameter of resource'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<CR>hello => world\<CR>, baz"
+          Expect GetPuppetIndent() == 2
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(3) == '  , baz'
+          Expect line('.') == 3
+          Expect col('.') == 7
+        end
+
+        it 'indents comma in array parameter value on second parameter to open square bracket column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>obaz => quux\<CR>, foo => [ 'hello'\<CR>,"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    baz => quux"
+          Expect getline(3) == "  , foo => [ 'hello'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(4) == '           ,'
+          Expect line('.') == 4
+          Expect col('.') == 12
+        end
+
+        it 'indents closing square bracket in array parameter value on first parameter to open square bracket column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<ESC>obaz => quux\<CR>, foo => [ 'hello'\<CR>, 'world'\<CR>]"
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    baz => quux"
+          Expect getline(3) == "  , foo => [ 'hello'"
+          Expect getline(4) == "           , 'world'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(5) == "           ]"
+          Expect line('.') == 5
+          Expect col('.') == 12
+        end
+      end
+
+      context "closing brace =>"
+        it 'unindents the closing curly brace in a parameter-less resource'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == '}'
+          Expect line('.') == 2
+          Expect col('.') == 1
+        end
+
+        it 'unindents the closing curly brace in a single parameter resource'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<CR>hello => world\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(3) == '}'
+          Expect line('.') == 3
+          Expect col('.') == 1
+        end
+
+        it 'unindents the closing curly brace in a single parameter resource with multi-line hash value'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<CR>hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(2) == "    hello => { 'wo'  => 'rld'"
+          Expect getline(3) == "             , 'hel' => 'lo'"
+          Expect getline(4) == "             }"
+          Expect getline(5) == '}'
+          Expect line('.') == 5
+          Expect col('.') == 1
+        end
+
+        it 'unindents the closing curly brace in a two parameter resource'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { 'bar':\<CR>hello => world\<CR>, foo => bar\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo { 'bar':"
+          Expect getline(4) == '}'
+          Expect line('.') == 4
+          Expect col('.') == 1
+        end
+
+        it 'unindents the closing curly brace in a two parameter resource with type with scope and underscore'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo::bar_baz::baz_quux { 'bar':\<CR>hello => world\<CR>, foo => bar\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo::bar_baz::baz_quux { 'bar':"
+          Expect getline(4) == '}'
+          Expect line('.') == 4
+          Expect col('.') == 1
+        end
+      end
+    end
+
+    context "with title array =>"
+      context "title array =>"
+        it 'indents a comma after opening resource title array to open square bracket column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>,"
+          Expect GetPuppetIndent() == 6
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(2) == '      ,'
+          Expect line('.') == 2
+          Expect col('.') == 7
+        end
+
+        it 'indents a comma later in resource title array to previous line comma'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>,"
+          Expect GetPuppetIndent() == 6
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(2) == "      , 'baz'"
+          Expect getline(3) == '      ,'
+          Expect line('.') == 3
+          Expect col('.') == 7
+        end
+
+        it 'indents a closing square bracket after opening resource title array to open square bracket column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>]"
+          Expect GetPuppetIndent() == 6
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(2) == '      ]'
+          Expect line('.') == 2
+          Expect col('.') == 7
+        end
+
+        it 'indents a closing square bracket later in resource title array to open square bracket column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]"
+          Expect GetPuppetIndent() == 6
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(3) == '      ]'
+          Expect line('.') == 3
+          Expect col('.') == 7
+        end
+      end
+
+      context "first parameter =>"
+        it 'indents the first line after closing square bracket of resource title array to resource name + 4'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo"
+          Expect GetPuppetIndent() == 4
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(4) == '    foo'
+          Expect line('.') == 4
+          Expect col('.') == 7
+        end
+
+        it 'indents comma in array parameter value on first parameter to open square bracket column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => [ 'hello'\<CR>,"
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(2) == "      , 'baz'"
+          Expect getline(3) == "      ]:"
+          Expect getline(4) == "    foo => [ 'hello'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(5) == '           ,'
+          Expect line('.') == 5
+          Expect col('.') == 12
+        end
+
+        it 'indents closing square bracket in array parameter value on first parameter to open square bracket column'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => [ 'hello'\<CR>, 'world'\<CR>]"
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(2) == "      , 'baz'"
+          Expect getline(3) == "      ]:"
+          Expect getline(4) == "    foo => [ 'hello'"
+          Expect getline(5) == "           , 'world'"
+          Expect GetPuppetIndent() == 11
+          Expect getline(6) == '           ]'
+          Expect line('.') == 6
+          Expect col('.') == 12
+        end
+      end
+
+      context "further parameters =>"
+        it 'indents second line after closing square bracket of resource title array to resource name + 2'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => bar\<CR>, baz"
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(2) == "      , 'baz'"
+          Expect getline(3) == "      ]:"
+          Expect getline(4) == "    foo => bar"
+          Expect GetPuppetIndent() == 2
+          Expect getline(5) == '  , baz'
+          Expect line('.') == 5
+          Expect col('.') == 7
+        end
+
+        it 'indents third line after closing square bracket of resource title array to resource name + 2'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => bar\<CR>, baz => quux\<CR>, hello"
+          Expect GetPuppetIndent() == 2
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(6) == '  , hello'
+          Expect line('.') == 6
+          Expect col('.') == 9
+        end
+      end
+
+      context "closing brace =>"
+        it 'unindents the closing curly brace in a parameter-less resource with title array'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(4) == '}'
+          Expect line('.') == 4
+          Expect col('.') == 1
+        end
+
+        it 'unindents the closing curly brace in a single parameter resource with title array'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => bar\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(5) == '}'
+          Expect line('.') == 5
+          Expect col('.') == 1
+        end
+
+        it 'unindents the closing curly brace in a two parameter resource with title array'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]:\<CR>foo => bar\<CR>, baz => quux\<CR>}"
+          Expect GetPuppetIndent() == 0
+          Expect getline(1) == "foo { [ 'bar'"
+          Expect getline(6) == '}'
+          Expect line('.') == 6
+          Expect col('.') == 1
+        end
+      end
+    end
   end
 
-  it 'indents by 4 spaces on return after a resource start'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { 'bar':\<CR> "
-    Expect GetPuppetIndent() == 4
-    Expect getline(1) == "foo { 'bar':"
-    Expect getline(2) == '     '
-    Expect line('.') == 2
-    Expect col('.') == 5
+  context "if =>"
+    context "single line condition =>"
+      context "body =>"
+        it 'indents body by 2 spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iif(foo == bar) {\<CR> "
+          Expect GetPuppetIndent() == 2
+          Expect getline(1) == "if(foo == bar) {"
+          Expect getline(2) == '   '
+          Expect line('.') == 2
+          Expect col('.') == 3
+        end
+
+        it 'indents body by 2 spaces after hitting return after if with and in condition'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iif(foo == bar and baz == quux) {\<CR> "
+          Expect GetPuppetIndent() == 2
+          Expect getline(1) == "if(foo == bar and baz == quux) {"
+          Expect getline(2) == '   '
+          Expect line('.') == 2
+          Expect col('.') == 3
+        end
+
+        it 'indents body by 2 spaces after hitting return when first line of body is empty'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iif(foo == bar) {\<CR>\<CR> "
+          Expect GetPuppetIndent() == 2
+          Expect getline(1) == "if(foo == bar) {"
+          Expect getline(2) == ''
+          Expect getline(3) == '   '
+          Expect line('.') == 3
+          Expect col('.') == 3
+        end
+
+        it 'indents body by 2 spaces after o on condition line'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iif(foo == bar) {\<ESC>o "
+          Expect GetPuppetIndent() == 2
+          Expect getline(1) == "if(foo == bar) {"
+          Expect getline(2) == '   '
+          Expect line('.') == 2
+          Expect col('.') == 3
+        end
+      end
+    end
+
+    context "multi line condition =>"
+      context "body =>"
+        it 'indents body by 2 spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iif(    foo == bar\<CR>and baz == quux\<CR>) {\<CR> "
+          Expect getline(1) == "if(    foo == bar"
+          Expect getline(2) == "   and baz == quux"
+          Expect getline(3) == '  ) {'
+          Expect GetPuppetIndent() == 2
+          Expect getline(4) == '   '
+          Expect line('.') == 4
+          Expect col('.') == 3
+        end
+
+        it 'indents body by 2 spaces after o on condition line'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iif(    foo == bar\<CR>and baz == quux\<CR>) {\<ESC>o "
+          Expect getline(1) == "if(    foo == bar"
+          Expect getline(2) == "   and baz == quux"
+          Expect getline(3) == '  ) {'
+          Expect GetPuppetIndent() == 2
+          Expect getline(4) == '   '
+          Expect line('.') == 4
+          Expect col('.') == 3
+        end
+      end
+    end
   end
 
-  it 'indents by 4 spaces on o on resource start line'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { 'bar':\<ESC>o "
-    Expect GetPuppetIndent() == 4
-    Expect getline(1) == "foo { 'bar':"
-    Expect getline(2) == '     '
-    Expect line('.') == 2
-    Expect col('.') == 5
+  context "case =>"
+    context "main body =>"
+      it 'indents body by 0 spaces after hitting return'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR> "
+        Expect getline(1) == "case($foo) {"
+        Expect GetPuppetIndent() == 0
+        Expect getline(2) == ' '
+        Expect line('.') == 2
+        Expect col('.') == 1
+      end
+
+      it 'indents body by 0 spaces after o on condition line'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<ESC>o "
+        Expect getline(1) == "case($foo) {"
+        Expect GetPuppetIndent() == 0
+        Expect getline(2) == ' '
+        Expect line('.') == 2
+        Expect col('.') == 1
+      end
+
+      it 'indents body by 0 spaces after hitting return on case without parentheses around variable'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase $foo  {\<CR> "
+        Expect getline(1) == "case $foo  {"
+        Expect GetPuppetIndent() == 0
+        Expect getline(2) == ' '
+        Expect line('.') == 2
+        Expect col('.') == 1
+      end
+
+      it 'indents closing curly brace of empty main body to opening curly brace line indent'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR>}"
+        Expect getline(1) == "case($foo) {"
+        Expect GetPuppetIndent() == 0
+        Expect getline(2) == '}'
+        Expect line('.') == 2
+        Expect col('.') == 1
+      end
+
+      it 'indents closing curly brace of case body with a single case as body to column of opening curly brace'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR>'foo': {\<CR>\<CR>}\<CR>}"
+        Expect getline(1) == "case($foo) {"
+        Expect getline(2) == "'foo': {"
+        Expect getline(3) == ''
+        Expect getline(4) == '}'
+        Expect GetPuppetIndent() == 0
+        Expect getline(5) == '}'
+        Expect line('.') == 5
+        Expect col('.') == 1
+      end
+    end
+    context "case body =>"
+      it 'indents case body by 2 spaces after hitting return'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR>'foo': {\<CR> "
+        Expect getline(1) == "case($foo) {"
+        Expect getline(2) == "'foo': {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(3) == '   '
+        Expect line('.') == 3
+        Expect col('.') == 3
+      end
+
+      it 'indents case body with list of values by 2 spaces after hitting return'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR>'foo','bar': {\<CR> "
+        Expect getline(1) == "case($foo) {"
+        Expect getline(2) == "'foo','bar': {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(3) == '   '
+        Expect line('.') == 3
+        Expect col('.') == 3
+      end
+
+      it 'indents closing curly brace of empty case body to column of opening curly brace'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR>'foo': {\<CR>}"
+        Expect getline(1) == "case($foo) {"
+        Expect getline(2) == "'foo': {"
+        Expect GetPuppetIndent() == 0
+        Expect getline(3) == '}'
+        Expect line('.') == 3
+        Expect col('.') == 1
+      end
+
+      it 'indents closing curly brace of case body with an empty line as body to column of opening curly brace'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR>'foo': {\<CR>\<CR>}"
+        Expect getline(1) == "case($foo) {"
+        Expect getline(2) == "'foo': {"
+        Expect getline(3) == ''
+        Expect GetPuppetIndent() == 0
+        Expect getline(4) == '}'
+        Expect line('.') == 4
+        Expect col('.') == 1
+      end
+
+      it 'indents closing curly brace of case body with a file resource as body to column of opening curly brace'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal icase($foo) {\<CR>'foo': {\<CR>file { '/etc/motd':\<CR>ensure => file\<CR>, owner => root\<CR>, group => root\<CR>, mode => '644'\<CR>, content => 'Foobar'\<CR>}\<CR>}"
+        Expect getline(1) == "case($foo) {"
+        Expect getline(2) == "'foo': {"
+        Expect getline(3) == "  file { '/etc/motd':"
+        Expect getline(4) == "      ensure  => file"
+        Expect getline(5) == "    , owner   => root"
+        Expect getline(6) == "    , group   => root"
+        Expect getline(7) == "    , mode    => '644'"
+        Expect getline(8) == "    , content => 'Foobar'"
+        Expect getline(9) == "  }"
+        Expect GetPuppetIndent() == 0
+        Expect getline(10) == '}'
+        Expect line('.') == 10
+        Expect col('.') == 1
+      end
+    end
   end
 
-  it 'indents comma by 2 spaces on return after initial parameter of resource'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { 'bar':\<CR>hello => world\<CR>, baz"
-    Expect GetPuppetIndent() == 2
-    Expect getline(1) == "foo { 'bar':"
-    Expect getline(3) == '  , baz'
-    Expect line('.') == 3
-    Expect col('.') == 7
+  context "class =>"
+    context "parameter list =>"
+      context "first parameter =>"
+        it 'indents first parameter by four spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iclass saltfoobar(\<CR> "
+          Expect getline(1) == "class saltfoobar("
+          Expect GetPuppetIndent() == 4
+          Expect getline(2) == '     '
+          Expect line('.') == 2
+          Expect col('.') == 5
+        end
+      end
+
+      context "further parameters =>"
+        it 'indents second parameter by two spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iclass saltfoobar(\<CR>$foo = bar\<CR>,"
+          Expect getline(1) == "class saltfoobar("
+          Expect getline(2) == '    $foo = bar'
+          Expect GetPuppetIndent() == 2
+          Expect getline(3) == '  ,'
+          Expect line('.') == 3
+          Expect col('.') == 3
+        end
+      end
+
+      context "closing parenthesis =>"
+        it 'indents closing parentheses by two spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal iclass saltfoobar(\<CR>$foo = bar\<CR>, $baz = quux\<CR>) {"
+          Expect getline(1) == "class saltfoobar("
+          Expect getline(2) == '    $foo = bar'
+          Expect getline(3) == '  , $baz = quux'
+          Expect GetPuppetIndent() == 2
+          Expect getline(4) == '  ) {'
+          Expect line('.') == 4
+          Expect col('.') == 5
+        end
+      end
+    end
+    context "body =>"
+      it 'indents body by 2 spaces relative to starting line with keyword'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iclass saltfoobar(\<CR>$foo = bar\<CR>, $baz = quux\<CR>) {\<CR> "
+        Expect getline(1) == "class saltfoobar("
+        Expect getline(2) == '    $foo = bar'
+        Expect getline(3) == '  , $baz = quux'
+        Expect getline(4) == '  ) {'
+        Expect GetPuppetIndent() == 2
+        Expect getline(5) == '   '
+        Expect line('.') == 5
+        Expect col('.') == 3
+      end
+
+      it 'indents body by 2 spaces relative to starting line with keyword in class without parameter list'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iclass saltfoobar {\<CR> "
+        Expect getline(1) == "class saltfoobar {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(2) == '   '
+        Expect line('.') == 2
+        Expect col('.') == 3
+      end
+    end
+    context "closing curly brace =>"
+      it 'indents closing body curly brace of empty body to column of starting keyword'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iclass saltfoobar(\<CR>$foo = bar\<CR>, $baz = quux\<CR>) {\<CR>}"
+        Expect getline(1) == "class saltfoobar("
+        Expect getline(2) == '    $foo = bar'
+        Expect getline(3) == '  , $baz = quux'
+        Expect getline(4) == '  ) {'
+        Expect GetPuppetIndent() == 0
+        Expect getline(5) == '}'
+        Expect line('.') == 5
+        Expect col('.') == 1
+      end
+
+      it 'indents closing body curly brace of body with empty if to column of starting keyword'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iclass saltfoobar(\<CR>$foo = bar\<CR>, $baz = quux\<CR>) {\<CR>if($foo) {\<CR>}\<CR>}"
+        Expect getline(1) == "class saltfoobar("
+        Expect getline(2) == '    $foo = bar'
+        Expect getline(3) == '  , $baz = quux'
+        Expect getline(4) == '  ) {'
+        Expect getline(5) == '  if($foo) {'
+        Expect getline(6) == '  }'
+        Expect GetPuppetIndent() == 0
+        Expect getline(7) == '}'
+        Expect line('.') == 7
+        Expect col('.') == 1
+      end
+    end
   end
 
-  it 'unindents the closing curly brace in a parameter-less resource'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { 'bar':\<CR>}"
-    Expect GetPuppetIndent() == 0
-    Expect getline(1) == "foo { 'bar':"
-    Expect getline(2) == '}'
-    Expect line('.') == 2
-    Expect col('.') == 1
+  context "defined type =>"
+    context "parameter list =>"
+      context "first parameter =>"
+        it 'indents first parameter by four spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal idefine saltfoobar::instance(\<CR> "
+          Expect getline(1) == "define saltfoobar::instance("
+          Expect GetPuppetIndent() == 4
+          Expect getline(2) == '     '
+          Expect line('.') == 2
+          Expect col('.') == 5
+        end
+      end
+
+      context "further parameters =>"
+        it 'indents second parameter by two spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal idefine saltfoobar::instance(\<CR>$foo = bar\<CR>,"
+          Expect getline(1) == "define saltfoobar::instance("
+          Expect getline(2) == '    $foo = bar'
+          Expect GetPuppetIndent() == 2
+          Expect getline(3) == '  ,'
+          Expect line('.') == 3
+          Expect col('.') == 3
+        end
+      end
+
+      context "closing parenthesis =>"
+        it 'indents closing parentheses by two spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal idefine saltfoobar::instance(\<CR>$foo = bar\<CR>, $baz = quux\<CR>) {"
+          Expect getline(1) == "define saltfoobar::instance("
+          Expect getline(2) == '    $foo = bar'
+          Expect getline(3) == '  , $baz = quux'
+          Expect GetPuppetIndent() == 2
+          Expect getline(4) == '  ) {'
+          Expect line('.') == 4
+          Expect col('.') == 5
+        end
+      end
+    end
   end
 
-  it 'unindents the closing curly brace in a single parameter resource'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { 'bar':\<CR>hello => world\<CR>}"
-    Expect GetPuppetIndent() == 0
-    Expect getline(1) == "foo { 'bar':"
-    Expect getline(3) == '}'
-    Expect line('.') == 3
-    Expect col('.') == 1
+  context "function =>"
+    context "parameter list =>"
+      context "first parameter =>"
+        it 'indents first parameter by four spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifunction saltfoobar::do_stuff(\<CR> "
+          Expect getline(1) == "function saltfoobar::do_stuff("
+          Expect GetPuppetIndent() == 4
+          Expect getline(2) == '     '
+          Expect line('.') == 2
+          Expect col('.') == 5
+        end
+      end
+
+      context "further parameters =>"
+        it 'indents second parameter by two spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifunction saltfoobar::do_stuff(\<CR>$foo = bar\<CR>,"
+          Expect getline(1) == "function saltfoobar::do_stuff("
+          Expect getline(2) == '    $foo = bar'
+          Expect GetPuppetIndent() == 2
+          Expect getline(3) == '  ,'
+          Expect line('.') == 3
+          Expect col('.') == 3
+        end
+      end
+
+      context "closing parenthesis =>"
+        it 'indents closing parentheses by two spaces after hitting return on empty parameter list'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifunction saltfoobar::do_stuff(\<CR>) {"
+          Expect getline(1) == "function saltfoobar::do_stuff("
+          Expect GetPuppetIndent() == 2
+          Expect getline(2) == '  ) {'
+          Expect line('.') == 2
+          Expect col('.') == 5
+        end
+
+        it 'indents closing parentheses by two spaces after hitting == on empty parameter list where the closing parenthesis is not indented at all yet'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifunction saltfoobar::do_stuff(\<ESC>o\<ESC>0i) {\<ESC>=="
+          Expect getline(1) == "function saltfoobar::do_stuff("
+          Expect GetPuppetIndent() == 2
+          Expect getline(2) == '  ) {'
+          Expect line('.') == 2
+          Expect col('.') == 3
+        end
+
+        it 'indents closing parentheses by two spaces after hitting return'
+          Expect line('.') == 1
+          Expect col('.') == 1
+          execute "normal ifunction saltfoobar::do_stuff(\<CR>$foo = bar\<CR>, $baz = quux\<CR>) {"
+          Expect getline(1) == "function saltfoobar::do_stuff("
+          Expect getline(2) == '    $foo = bar'
+          Expect getline(3) == '  , $baz = quux'
+          Expect GetPuppetIndent() == 2
+          Expect getline(4) == '  ) {'
+          Expect line('.') == 4
+          Expect col('.') == 5
+        end
+      end
+    end
   end
 
-  it 'unindents the closing curly brace in a two parameter resource'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { 'bar':\<CR>hello => world\<CR>, foo => bar\<CR>}"
-    Expect GetPuppetIndent() == 0
-    Expect getline(1) == "foo { 'bar':"
-    Expect getline(4) == '}'
-    Expect line('.') == 4
-    Expect col('.') == 1
+  context "function call with code block =>"
+    context "body =>"
+      it 'indents body by two spaces relative to function identifier line'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal ieach($foo) |$bar| {\<CR> "
+        Expect getline(1) == "each($foo) |$bar| {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(2) == '   '
+        Expect line('.') == 2
+        Expect col('.') == 3
+      end
+
+      it 'indents body by two spaces relative to function identifier line if function parameters are spread over multiple lines'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal ieach([ 'foo'\<CR>, 'bar'\<CR>]) |$bar| {\<CR> "
+        Expect getline(1) == "each([ 'foo'"
+        Expect getline(2) == "     , 'bar'"
+        Expect getline(3) == "     ]) |$bar| {"
+        Expect GetPuppetIndent() == 2
+        Expect getline(4) == '   '
+        Expect line('.') == 4
+        Expect col('.') == 3
+      end
+    end
   end
 
-  it 'indents a comma after opening resource title array to open square bracket column'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { [ 'bar'\<CR>,"
-    Expect GetPuppetIndent() == 6
-    Expect getline(1) == "foo { [ 'bar'"
-    Expect getline(2) == '      ,'
-    Expect line('.') == 2
-    Expect col('.') == 7
+  context "variable assignments =>"
+    it 'indents line after multi-line array value correctly'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal i$foo = [ 'bar'\<CR>, 'baz'\<CR>]\<CR>$hello = 'world'"
+      Expect getline(1) == "$foo = [ 'bar'"
+      Expect getline(2) == "       , 'baz'"
+      Expect getline(3) == "       ]"
+      Expect GetPuppetIndent() == 0
+      Expect getline(4) == "$hello = 'world'"
+      Expect line('.') == 4
+      Expect col('.') == 16
+    end
+
+    it 'indents line after multi-line array value with variable concat correctly'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal i$foo = [ 'bar'\<CR>, 'baz'\<CR>] + $bar\<CR>$hello = 'world'"
+      Expect getline(1) == "$foo = [ 'bar'"
+      Expect getline(2) == "       , 'baz'"
+      Expect getline(3) == "       ] + $bar"
+      Expect GetPuppetIndent() == 0
+      Expect getline(4) == "$hello = 'world'"
+      Expect line('.') == 4
+      Expect col('.') == 16
+    end
+
+    it 'indents line after multi-line array value with variable concat correctly even if there is an empty line in between'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal i$foo = [ 'bar'\<CR>, 'baz'\<CR>] + $bar\<CR>\<CR>$hello = 'world'"
+      Expect getline(1) == "$foo = [ 'bar'"
+      Expect getline(2) == "       , 'baz'"
+      Expect getline(3) == "       ] + $bar"
+      Expect getline(4) == ""
+      Expect GetPuppetIndent() == 0
+      Expect getline(5) == "$hello = 'world'"
+      Expect line('.') == 5
+      Expect col('.') == 16
+    end
+
+    it 'indents line after multi-line hash value correctly'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal i$foo = { 'bar' => 'rab'\<CR>, 'baz' => 'zab'\<CR>}\<CR>$hello = 'world'"
+      Expect getline(1) == "$foo = { 'bar' => 'rab'"
+      Expect getline(2) == "       , 'baz' => 'zab'"
+      Expect getline(3) == "       }"
+      Expect GetPuppetIndent() == 0
+      Expect getline(4) == "$hello = 'world'"
+      Expect line('.') == 4
+      Expect col('.') == 16
+    end
   end
 
-  it 'indents a comma later in resource title array to previous line comma'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>,"
-    Expect GetPuppetIndent() == 6
-    Expect getline(1) == "foo { [ 'bar'"
-    Expect getline(2) == "      , 'baz'"
-    Expect getline(3) == '      ,'
-    Expect line('.') == 3
-    Expect col('.') == 7
+  context "bare expressions (as in return from function) =>"
+    context "hashes =>"
+      it 'indents single line hash value inside if correctly'
+        Expect line('.') == 1
+        Expect col('.') == 1
+        execute "normal iif($foo) {\<CR>{ 'hello' => 'world', 'bar' => 'baz' }\<CR>}"
+        Expect getline(1) == "if($foo) {"
+        Expect getline(2) == "  { 'hello' => 'world', 'bar' => 'baz' }"
+        Expect getline(3) == "}"
+        Expect line('.') == 3
+        Expect col('.') == 1
+      end
+    end
+  end
+end
+
+describe "alignment of arrow =>"
+  before
+    new
+    set filetype=puppet
+    " let b:closer = 1
+    " let b:closer_flags = '([{'
+    " call closer#enable()
   end
 
-  it 'indents a closing square bracket after opening resource title array to open square bracket column'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { [ 'bar'\<CR>]"
-    Expect GetPuppetIndent() == 6
-    Expect getline(1) == "foo { [ 'bar'"
-    Expect getline(2) == '      ]'
-    Expect line('.') == 2
-    Expect col('.') == 7
+  after
+    close!
   end
 
-  it 'indents a closing square bracket later in resource title array to open square bracket column'
-    Expect line('.') == 1
-    Expect col('.') == 1
-    execute "normal ifoo { [ 'bar'\<CR>, 'baz'\<CR>]"
-    Expect GetPuppetIndent() == 6
-    Expect getline(1) == "foo { [ 'bar'"
-    Expect getline(3) == '      ]'
-    Expect line('.') == 3
-    Expect col('.') == 7
+  context "resources =>"
+    it 'aligns arrows correctly if second of two parameters is the same length as the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [3,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,1], [3,11,1]]
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => world"
+      Expect getline(3) == "  , world => hello"
+      Expect getline(4) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is the same length as the first and first has single line nested hash value'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => { 'wo' => 'rld' }\<CR>, world => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [3,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,1], [3,11,1]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => { 'wo' => 'rld' }"
+      Expect getline(3) == "  , world => hello"
+      Expect getline(4) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is the same length as the first and first has multi line nested hash value'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>, world => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [5,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,3], [5,11,1]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => { 'wo'  => 'rld'"
+      Expect getline(3) == "             , 'hel' => 'lo'"
+      Expect getline(4) == "             }"
+      Expect getline(5) == "  , world => hello"
+      Expect getline(6) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is the same length as the first and both have multi line nested hash values'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>, world => { 'foo' => 'bar'\<CR>, 'quux' => 'baz'\<CR>\}\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [5,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,3], [5,11,3]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => { 'wo'  => 'rld'"
+      Expect getline(3) == "             , 'hel' => 'lo'"
+      Expect getline(4) == "             }"
+      Expect getline(5) == "  , world => { 'foo'  => 'bar'"
+      Expect getline(6) == "             , 'quux' => 'baz'"
+      Expect getline(7) == "             }"
+      Expect getline(8) == "}"
+    end
+
+    it 'aligns arrows correctly if single parameter hash value has two keys of the same length and both have multi line nested hash values'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>multi => { hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>, world => { 'foo' => 'bar'\<CR>, 'quux' => 'baz'\<CR>\}\<CR>}\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,7]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    multi => { hello => { 'wo'  => 'rld'"
+      Expect getline(3) == "                        , 'hel' => 'lo'"
+      Expect getline(4) == "                        }"
+      Expect getline(5) == "             , world => { 'foo'  => 'bar'"
+      Expect getline(6) == "                        , 'quux' => 'baz'"
+      Expect getline(7) == "                        }"
+      Expect getline(8) == "             }"
+      Expect getline(9) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is two chars longer than the first and first has multi line nested hash value'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => { 'wo' => 'rld'\<CR>, 'hel' => 'lo'\<CR>}\<CR>, worldly => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,13], [5,13]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,13,3], [5,13,1]]
+      Expect puppet#align#FindAlignColumn() == 13
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello   => { 'wo'  => 'rld'"
+      Expect getline(3) == "               , 'hel' => 'lo'"
+      Expect getline(4) == "               }"
+      Expect getline(5) == "  , worldly => hello"
+      Expect getline(6) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is one char longer than the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worlds => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,12], [3,12]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,12,1], [3,12,1]]
+      Expect puppet#align#FindAlignColumn() == 12
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello  => world"
+      Expect getline(3) == "  , worlds => hello"
+      Expect getline(4) == "}"
+    end
+
+    it 'aligns arrows correctly if second of two parameters is two chars longer than the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldly => hello\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,13], [3,13]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,13,1], [3,13,1]]
+      Expect puppet#align#FindAlignColumn() == 13
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello   => world"
+      Expect getline(3) == "  , worldly => hello"
+      Expect getline(4) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first two'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [3,11], [4,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,1], [3,11,1], [4,11,1]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => world"
+      Expect getline(3) == "  , world => hello"
+      Expect getline(4) == "  , hollo => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is one char longer than first two'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>, hollow => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,12], [3,12], [4,12]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,12,1], [3,12,1], [4,12,1]]
+      Expect puppet#align#FindAlignColumn() == 12
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello  => world"
+      Expect getline(3) == "  , world  => hello"
+      Expect getline(4) == "  , hollow => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is one char shorter than first two'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, world => hello\<CR>, hell => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,11], [3,11], [4,11]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,11,1], [3,11,1], [4,11,1]]
+      Expect puppet#align#FindAlignColumn() == 11
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello => world"
+      Expect getline(3) == "  , world => hello"
+      Expect getline(4) == "  , hell  => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first but the second is one char longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worlds => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,12], [3,12], [4,12]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,12,1], [3,12,1], [4,12,1]]
+      Expect puppet#align#FindAlignColumn() == 12
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello  => world"
+      Expect getline(3) == "  , worlds => hello"
+      Expect getline(4) == "  , hollo  => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first but the second is two chars longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldly => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,13], [3,13], [4,13]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,13,1], [3,13,1], [4,13,1]]
+      Expect puppet#align#FindAlignColumn() == 13
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello   => world"
+      Expect getline(3) == "  , worldly => hello"
+      Expect getline(4) == "  , hollo   => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first but the second is three chars longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlie => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,14], [3,14], [4,14]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,14,1], [3,14,1], [4,14,1]]
+      Expect puppet#align#FindAlignColumn() == 14
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello    => world"
+      Expect getline(3) == "  , worldlie => hello"
+      Expect getline(4) == "  , hollo    => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if third of three parameters is the same length as the first but the second is four chars longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollo => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,15,1], [3,15,1], [4,15,1]]
+      Expect puppet#align#FindAlignColumn() == 15
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello     => world"
+      Expect getline(3) == "  , worldlier => hello"
+      Expect getline(4) == "  , hollo     => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if the second and third of three parameters are four chars longer than the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollowman => world\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,15,1], [3,15,1], [4,15,1]]
+      Expect puppet#align#FindAlignColumn() == 15
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello     => world"
+      Expect getline(3) == "  , worldlier => hello"
+      Expect getline(4) == "  , hollowman => world"
+      Expect getline(5) == "}"
+    end
+
+    it 'aligns arrows correctly if the second, third and fourth of four parameters are four chars longer than the first'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollowman => world\<CR>, workhorse => horsework\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15], [5,15]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,15,1], [3,15,1], [4,15,1], [5,15,1]]
+      Expect puppet#align#FindAlignColumn() == 15
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello     => world"
+      Expect getline(3) == "  , worldlier => hello"
+      Expect getline(4) == "  , hollowman => world"
+      Expect getline(5) == "  , workhorse => horsework"
+      Expect getline(6) == "}"
+    end
+
+    it 'aligns arrows correctly if the second, third of four parameters are four chars longer than the first and the fourth is two chars longer'
+      Expect line('.') == 1
+      Expect col('.') == 1
+      execute "normal ifoo { 'bla':\<CR>hello => world\<CR>, worldlier => hello\<CR>, hollowman => world\<CR>, hoarser => horse\<CR>}"
+      Expect puppet#align#FindArrows() == [[2,15], [3,15], [4,15], [5,15]]
+      Expect puppet#align#FindArrowsWithLineCounts() == [[2,15,1], [3,15,1], [4,15,1], [5,15,1]]
+      Expect puppet#align#FindAlignColumn() == 15
+      Expect getline(1) == "foo { 'bla':"
+      Expect getline(2) == "    hello     => world"
+      Expect getline(3) == "  , worldlier => hello"
+      Expect getline(4) == "  , hollowman => world"
+      Expect getline(5) == "  , hoarser   => horse"
+      Expect getline(6) == "}"
+    end
   end
 end
